@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKYNAS.RU | Welcome</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary-color: #00d2ff;
+            --bg-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --online: #10b981;
+            --offline: #ef4444;
+        }
+
+        /* ... (оставляем все предыдущие стили тела и контейнера) ... */
+        body { font-family: 'Inter', sans-serif; background: #0f172a; height: 100vh; display: flex; align-items: center; justify-content: center; color: white; margin: 0; overflow: hidden; }
+        .container { position: relative; z-index: 1; text-align: center; padding: 2.5rem; background: var(--glass-bg); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 32px; max-width: 650px; width: 90%; }
+        .logo { font-size: 3rem; font-weight: 700; background: linear-gradient(to right, #00d2ff, #9cedff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; margin-bottom: 2rem; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        
+        .card {
+            display: flex; flex-direction: column; padding: 16px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; text-decoration: none; color: white; transition: 0.3s; position: relative; overflow: hidden;
+        }
+        .card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.1); border-color: var(--primary-color); }
+        .full-width { grid-column: span 2; }
+
+        /* Стиль индикатора статуса внутри кнопки */
+        .status-label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            font-weight: 700;
+            color: #94a3b8; /* По умолчанию серый */
+        }
+
+        .status-label.online { color: var(--online); }
+        .status-label.offline { color: var(--offline); }
+
+        .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .online .dot { box-shadow: 0 0 8px var(--online); }
+        
+        .card-title { font-weight: 600; margin-bottom: 2px; display: block; }
+        .card-desc { font-size: 0.75rem; color: #94a3b8; }
+        i { color: var(--primary-color); margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo">SKYNAS</div>
+        
+        <div class="grid">
+            <a href="https://ai.skynas.ru" class="card" data-url="https://ai.skynas.ru">
+                <i data-lucide="bot"></i>
+                <span class="card-title">AI Agents</span>
+                <span class="card-desc">Open WebUI</span>
+                <div class="status-label"><span class="dot"></span><span class="status-text">Checking...</span></div>
+            </a>
+
+            <a href="https://chat.skynas.ru" class="card" data-url="https://chat.skynas.ru">
+                <i data-lucide="message-square"></i>
+                <span class="card-title">Messenger</span>
+                <span class="card-desc">RocketChat</span>
+                <div class="status-label"><span class="dot"></span><span class="status-text">Checking...</span></div>
+            </a>
+
+            <a href="https://jitsi.skynas.ru" class="card" data-url="https://jitsi.skynas.ru">
+                <i data-lucide="video"></i>
+                <span class="card-title">Video Conf</span>
+                <span class="card-desc">Jitsi Meet</span>
+                <div class="status-label"><span class="dot"></span><span class="status-text">Checking...</span></div>
+            </a>
+
+            <a href="https://mail.skynas.ru" class="card" data-url="https://mail.skynas.ru">
+                <i data-lucide="mail"></i>
+                <span class="card-title">Mail Service</span>
+                <span class="card-desc">Mailcow</span>
+                <div class="status-label"><span class="dot"></span><span class="status-text">Checking...</span></div>
+            </a>
+
+            <a href="https://synya.skynas.ru" class="card full-width" data-url="https://synya.skynas.ru">
+                <i data-lucide="hard-drive"></i>
+                <span class="card-title">Synology NAS</span>
+                <span class="card-desc">Хранилище файлов</span>
+                <div class="status-label"><span class="dot"></span><span class="status-text">Checking...</span></div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Функция проверки статуса
+        async function checkStatus(card) {
+            const url = card.getAttribute('data-url');
+            const statusLabel = card.querySelector('.status-label');
+            const statusText = card.querySelector('.status-text');
+
+            try {
+                // Используем fetch с режимом no-cors. 
+                // Мы не сможем прочитать содержимое, но поймем, ответил ли сервер.
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // Таймаут 5 сек
+
+                await fetch(url, { mode: 'no-cors', signal: controller.signal });
+                
+                // Если fetch не выкинул ошибку, значит сервер жив
+                statusLabel.classList.add('online');
+                statusText.innerText = 'Online';
+            } catch (error) {
+                statusLabel.classList.add('offline');
+                statusText.innerText = 'Offline';
+            }
+        }
+
+        // Запускаем проверку для всех карточек
+        document.querySelectorAll('.card').forEach(card => {
+            checkStatus(card);
+        });
+    </script>
+</body>
+</html>

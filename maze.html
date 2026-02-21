@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="maze.css">
+</head>
+<body tabindex="0">
+    <div class="header-info">
+        <span>LVL: <span id="level-val" class="lvl-text">1</span></span>
+        <span id="key-status" style="color: #fbbf24; opacity: 0.3;">k КЛЮЧ</span>
+        <span id="book-status" style="color: #a855f7; opacity: 0.2; display: none;">book</span>
+        <span>VIEW: <span id="vision-val" class="lvl-text">MAX</span></span>
+        <span onclick="resetGame()" style="cursor:pointer; color:#ef4444; font-size:0.7rem; margin-left:10px;">[СБРОС]</span>
+    </div>
+    <div id="win" class="win-msg">WAY OUT FOUND!</div>
+    
+    <div class="canvas-wrapper">
+        <canvas id="maze"></canvas>
+    </div>
+
+    <div class="controls-container">
+        <div class="btn up" id="btn-ArrowUp">▲</div>
+        <div class="btn left" id="btn-ArrowLeft">◀</div>
+        <div class="btn down" id="btn-ArrowDown">▼</div>
+        <div class="btn right" id="btn-ArrowRight">▶</div>
+    </div>
+
+    <!-- Порядок важен: сначала ядро, потом контроллер -->
+    <script src="maze-core.js"></script>
+    <script src="maze-game.js"></script>
+</body>
+</html>
