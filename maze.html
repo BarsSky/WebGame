@@ -1,32 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Лабиринт — SKYNAS</title>
     <link rel="stylesheet" href="maze.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Segoe+UI+Emoji&display=swap" rel="stylesheet">
 </head>
 <body tabindex="0">
-    <div class="header-info">
-        <span>LVL: <span id="level-val" class="lvl-text">1</span></span>
-        <span id="key-status" style="color: #fbbf24; opacity: 0.3;">k КЛЮЧ</span>
-        <span id="book-status" style="color: #a855f7; opacity: 0.2; display: none;">book</span>
-        <span>VIEW: <span id="vision-val" class="lvl-text">MAX</span></span>
-        <span onclick="resetGame()" style="cursor:pointer; color:#ef4444; font-size:0.7rem; margin-left:10px;">[СБРОС]</span>
+    <div class="app-container">
+        <div class="header-info">
+            <span>LVL: <span id="level-val" class="lvl-text">1</span></span>
+            <span id="key-status" style="color: #fbbf24; opacity: 0.3;">🔑 КЛЮЧ</span>
+            <span id="book-status" style="color: #a855f7; opacity: 0.2; display: none;">📖</span>
+            <span>VIEW: <span id="vision-val" class="lvl-text">MAX</span></span>
+            <span onclick="resetGame()" style="cursor:pointer; color:#ef4444; font-size:0.7rem; margin-left:10px;">[СБРОС]</span>
+            <span class="toggle-btn" onclick="togglePanel('help')">?</span>
+            <span class="toggle-btn" onclick="togglePanel('table')">📊</span>
+        </div>
+        <div class="main-content">
+            <div id="help-panel" class="side-panel help-panel desktop-visible">
+                <h3>Справка</h3>
+                <p>Используйте стрелки клавиатуры или кнопки на экране для перемещения.</p>
+                <p>Соберите ключ, чтобы открыть выход. На уровнях >=10 соберите книгу для видимости пути.</p>
+                <p>Туман войны сужается с уровнем. После 15 уровня - камера следует за игроком.</p>
+                <button class="hide-btn desktop-only" onclick="hidePanel('help')">Скрыть</button>
+            </div>
+            <div class="center-content">
+                <div id="win" class="win-msg">WAY OUT FOUND!</div>
+                <div class="canvas-wrapper">
+                    <canvas id="maze"></canvas>
+                </div>
+                <div class="controls-container">
+                    <div class="btn up" id="btn-ArrowUp">▲</div>
+                    <div class="btn left" id="btn-ArrowLeft">◀</div>
+                    <div class="btn down" id="btn-ArrowDown">▼</div>
+                    <div class="btn right" id="btn-ArrowRight">▶</div>
+                </div>
+            </div>
+            <div id="table-panel" class="side-panel table-panel desktop-visible">
+                <h3>Таблица</h3>
+                <table>
+                    <tr><th>Уровень</th><th>Описание</th></tr>
+                    <tr><td>1-4</td><td>Широкий обзор</td></tr>
+                    <tr><td>5-9</td><td>Средний обзор</td></tr>
+                    <tr><td>10+</td><td>Узкий обзор, книга доступна</td></tr>
+                    <tr><td>15+</td><td>Камера следует за игроком</td></tr>
+                </table>
+                <button class="hide-btn desktop-only" onclick="hidePanel('table')">Скрыть</button>
+            </div>
+        </div>
     </div>
-    <div id="win" class="win-msg">WAY OUT FOUND!</div>
-    
-    <div class="canvas-wrapper">
-        <canvas id="maze"></canvas>
-    </div>
-
-    <div class="controls-container">
-        <div class="btn up" id="btn-ArrowUp">▲</div>
-        <div class="btn left" id="btn-ArrowLeft">◀</div>
-        <div class="btn down" id="btn-ArrowDown">▼</div>
-        <div class="btn right" id="btn-ArrowRight">▶</div>
-    </div>
-
-    <!-- Порядок важен: сначала ядро, потом контроллер -->
+    <!-- Скрипты -->
     <script src="maze-core.js"></script>
     <script src="maze-game.js"></script>
 </body>

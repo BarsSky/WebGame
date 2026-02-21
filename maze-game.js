@@ -336,6 +336,32 @@ window.addEventListener('resize', () => {
     draw();
 });
 
+// Функции для панелей
+function togglePanel(panel) {
+    const el = document.getElementById(panel + '-panel');
+    if (el.classList.contains('panel-visible')) {
+        el.classList.remove('panel-visible');
+    } else {
+        // Закрываем другую панель, если открыта
+        const other = panel === 'help' ? 'table' : 'help';
+        document.getElementById(other + '-panel').classList.remove('panel-visible');
+        el.classList.add('panel-visible');
+    }
+}
+
+function hidePanel(panel) {
+    const el = document.getElementById(panel + '-panel');
+    el.style.display = 'none';
+    // Расширяем центр, если обе панели скрыты
+    if (!document.getElementById('help-panel').style.display && !document.getElementById('table-panel').style.display) {
+        document.querySelector('.center-content').classList.add('center-expanded');
+    } else {
+        document.querySelector('.center-content').classList.remove('center-expanded');
+    }
+    resizeCanvas();
+    draw();
+}
+
 initControls();
 setupGame();
 requestAnimationFrame(gameLoop);

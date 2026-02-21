@@ -30,56 +30,152 @@
             padding: 20px;
         }
 
-        @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes gradient { 
+            0% { background-position: 0% 50%; } 
+            50% { background-position: 100% 50%; } 
+            100% { background-position: 0% 50%; } 
+        }
 
         .container {
-            position: relative; z-index: 1; text-align: center; padding: 2.5rem;
-            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); border-radius: 32px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); max-width: 650px; width: 100%;
+            position: relative; 
+            z-index: 1; 
+            text-align: center; 
+            padding: 2.5rem;
+            background: var(--glass-bg); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); 
+            border-radius: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4); 
+            max-width: 650px; 
+            width: 100%;
         }
 
-        /* Stats Styling */
-        .stats-container { display: flex; justify-content: center; gap: 30px; margin-bottom: 25px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; }
-        .stat-item { width: 80px; text-align: center; }
-        .circular-chart { display: block; margin: 5px auto; max-width: 60px; }
-        .circle-bg { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 3; }
-        .circle { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 1s ease; stroke: var(--primary-color); }
-        .percentage { fill: #fff; font-size: 0.6rem; text-anchor: middle; font-weight: 700; }
-        .stat-label { font-size: 0.6rem; color: #94a3b8; font-weight: 700; display: block; }
+        .stats-container {
+            display: flex; 
+            justify-content: center; 
+            gap: 30px; 
+            margin-bottom: 25px; 
+            background: rgba(255,255,255,0.03); 
+            padding: 15px; 
+            border-radius: 20px;
+        }
 
-        .logo { font-size: 2.5rem; font-weight: 700; background: linear-gradient(to right, #00d2ff, #9cedff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; margin-bottom: 20px; }
+        .stat-item {
+            width: 80px; 
+            text-align: center;
+        }
+
+        .circular-chart {
+            display: block; 
+            margin: 5px auto; 
+            max-width: 60px;
+        }
+
+        .circle-bg {
+            fill: none; 
+            stroke: rgba(255,255,255,0.1); 
+            stroke-width: 3;
+        }
+
+        .circle {
+            fill: none; 
+            stroke-width: 3; 
+            stroke-linecap: round; 
+            transition: stroke-dasharray 1s ease; 
+            stroke: var(--primary-color);
+        }
+
+        .percentage {
+            fill: #fff; 
+            font-size: 0.6rem; 
+            text-anchor: middle; 
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.6rem; 
+            color: #94a3b8; 
+            font-weight: 700; 
+            display: block;
+        }
+
+        .logo {
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            background: linear-gradient(to right, #00d2ff, #9cedff);
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            text-transform: uppercase; 
+            margin-bottom: 20px;
+        }
         
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-        .card { display: flex; flex-direction: column; padding: 14px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; text-decoration: none; color: white; transition: 0.3s; text-align: left; }
-        .card:hover { background: rgba(255,255,255,0.1); border-color: var(--primary-color); transform: translateY(-2px); }
-        .card i { color: var(--primary-color); margin-bottom: 8px; }
-        .card-title { font-weight: 600; font-size: 0.9rem; }
-        .card-desc { font-size: 0.7rem; color: #94a3b8; }
-        .full-width { grid-column: span 2; }
+        .grid {
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 12px; 
+            margin-bottom: 20px;
+        }
 
-        /* Game Button */
+        .card {
+            display: flex; 
+            flex-direction: column; 
+            padding: 14px; 
+            background: var(--glass-bg); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 16px; 
+            text-decoration: none; 
+            color: white; 
+            transition: 0.3s; 
+            text-align: left;
+        }
+
+        .card:hover {
+            background: rgba(255,255,255,0.1); 
+            border-color: var(--primary-color); 
+            transform: translateY(-2px);
+        }
+
+        .card i {
+            color: var(--primary-color); 
+            margin-bottom: 8px;
+        }
+
+        .card-title {
+            font-weight: 600; 
+            font-size: 0.9rem;
+        }
+
+        .card-desc {
+            font-size: 0.7rem; 
+            color: #94a3b8;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
         .game-trigger {
             background: linear-gradient(90deg, #6366f1, #a855f7);
-            border: none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; width: 100%;
+            border: none; 
+            padding: 14px 24px; 
+            border-radius: 12px; 
+            color: white; 
+            font-weight: 600; 
+            cursor: pointer;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+            transition: 0.3s; 
+            width: 100%;
+            font-size: 1.1rem;
         }
-        .game-trigger:hover { opacity: 0.9; transform: scale(1.02); }
 
-        /* Maze Overlay */
-#maze-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.9); display: none; 
-    align-items: center; justify-content: center; z-index: 1000;
-}
-.game-modal {
-    width: 90%; max-width: 500px; position: relative;
-}
-.close-game {
-    position: absolute; top: -45px; right: 0;
-    background: #ef4444; border: none; color: white;
-    padding: 8px 16px; border-radius: 10px; cursor: pointer; font-weight: bold;
-}
+        .game-trigger:hover {
+            opacity: 0.92; 
+            transform: scale(1.03);
+        }
     </style>
 </head>
 <body>
@@ -88,11 +184,19 @@
         <!-- Proxmox Stats -->
         <div class="stats-container">
             <div class="stat-item">
-                <svg viewBox="0 0 36 36" class="circular-chart"><path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" /><path id="cpu-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" /><text x="18" y="20.35" class="percentage" id="cpu-text">0%</text></svg>
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path id="cpu-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage" id="cpu-text">0%</text>
+                </svg>
                 <span class="stat-label">CPU</span>
             </div>
             <div class="stat-item">
-                <svg viewBox="0 0 36 36" class="circular-chart"><path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" /><path id="ram-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" /><text x="18" y="20.35" class="percentage" id="ram-text">0%</text></svg>
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path id="ram-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage" id="ram-text">0%</text>
+                </svg>
                 <span class="stat-label">RAM</span>
             </div>
         </div>
@@ -100,133 +204,73 @@
         <div class="logo">SKYNAS</div>
         
         <div class="grid">
-            <a href="https://ai.skynas.ru" class="card"><i data-lucide="bot"></i><span class="card-title">AI Agents</span><span class="card-desc">Open WebUI AI</span></a>
-            <a href="https://chat.skynas.ru" class="card"><i data-lucide="message-square"></i><span class="card-title">Messenger</span><span class="card-desc">RocketChat</span></a>
-            <a href="https://jitsi.skynas.ru" class="card"><i data-lucide="video"></i><span class="card-title">Video</span><span class="card-desc">Jitsi Meet</span></a>
-            <a href="https://mail.skynas.ru" class="card"><i data-lucide="mail"></i><span class="card-title">Mail</span><span class="card-desc">Mailcow</span></a>
-            <a href="https://synya.skynas.ru" class="card full-width"><i data-lucide="hard-drive"></i><span class="card-title">Synology NAS</span><span class="card-desc">Data Storage Center</span></a>
+            <a href="https://ai.skynas.ru" class="card">
+                <i data-lucide="bot"></i>
+                <span class="card-title">AI Agents</span>
+                <span class="card-desc">Open WebUI AI</span>
+            </a>
+            <a href="https://chat.skynas.ru" class="card">
+                <i data-lucide="message-square"></i>
+                <span class="card-title">Messenger</span>
+                <span class="card-desc">RocketChat</span>
+            </a>
+            <a href="https://jitsi.skynas.ru" class="card">
+                <i data-lucide="video"></i>
+                <span class="card-title">Video</span>
+                <span class="card-desc">Jitsi Meet</span>
+            </a>
+            <a href="https://mail.skynas.ru" class="card">
+                <i data-lucide="mail"></i>
+                <span class="card-title">Mail</span>
+                <span class="card-desc">Mailcow</span>
+            </a>
+            <a href="https://synya.skynas.ru" class="card full-width">
+                <i data-lucide="hard-drive"></i>
+                <span class="card-title">Synology NAS</span>
+                <span class="card-desc">Data Storage Center</span>
+            </a>
         </div>
 
-        <button class="game-trigger" onclick="openGame()">
+        <button class="game-trigger" onclick="openMazeGame()">
             <i data-lucide="gamepad-2"></i> ИГРАТЬ В ЛАБИРИНТ
         </button>
     </div>
 
-    <!-- Game UI -->
-<div id="maze-overlay">
-    <div class="game-modal">
-        <button class="close-game" onclick="closeGame()">ВЫЙТИ ИЗ ИГРЫ</button>
-        <iframe id="gameFrame" src="" style="width:100%; height:600px; border:none; border-radius:20px;"></iframe>
-    </div>
-</div>
-
     <script>
         lucide.createIcons();
 
-        // --- PROXMOX STATS ---
-        const PVE_TOKEN = "Status@pam!skynas-st=c971fe8f-2e47-474d-9859-5376d48db895"; // Замените на ваш!
+        // Proxmox stats
+        const PVE_TOKEN = "Status@pam!skynas-st=c971fe8f-2e47-474d-9859-5376d48db895";
+        
         async function updatePVEStats() {
             try {
-                const response = await fetch('https://prox-api.skynas.ru', { headers: { 'Authorization': `PVEAPIToken=${PVE_TOKEN}` } });
+                const response = await fetch('https://prox-api.skynas.ru', { 
+                    headers: { 'Authorization': `PVEAPIToken=${PVE_TOKEN}` } 
+                });
+                if (!response.ok) throw new Error('Network response was not ok');
+                
                 const resData = await response.json();
                 const data = resData.data;
+                
                 const cpu = Math.round(data.cpu * 100);
                 const ram = Math.round((data.memory.used / data.memory.total) * 100);
+                
                 document.getElementById('cpu-circle').setAttribute('stroke-dasharray', `${cpu}, 100`);
                 document.getElementById('cpu-text').textContent = `${cpu}%`;
                 document.getElementById('ram-circle').setAttribute('stroke-dasharray', `${ram}, 100`);
                 document.getElementById('ram-text').textContent = `${ram}%`;
-            } catch (e) { console.error("Stats Error"); }
-        }
-        setInterval(updatePVEStats, 5000);
-        updatePVEStats();
-
-        // --- MAZE GAME LOGIC ---
-        const canvas = document.getElementById('mazeCanvas');
-        const ctx = canvas.getContext('2d');
-        let maze, player, goal;
-        const gridSize = 20;
-        const cols = canvas.width / gridSize;
-        const rows = canvas.height / gridSize;
-
-function openGame() {
-    const overlay = document.getElementById('maze-overlay');
-    const frame = document.getElementById('gameFrame');
-    
-    frame.src = 'maze.html';
-    overlay.style.display = 'flex';
-
-    // Ждем загрузки iframe и передаем ему фокус
-    frame.onload = function() {
-        frame.contentWindow.focus();
-    };
-}
-
-function closeGame() {
-    const overlay = document.getElementById('maze-overlay');
-    const frame = document.getElementById('gameFrame');
-    frame.src = ''; // Выгружаем игру, чтобы она не ела ресурсы
-    overlay.style.display = 'none';
-}  
-
-        function initMaze() {
-            maze = Array(rows).fill().map(() => Array(cols).fill(1));
-            generateMaze(0, 0);
-            player = { x: 0, y: 0 };
-            goal = { x: cols - 1, y: rows - 1 };
-            maze[goal.y][goal.x] = 0; // Гарантируем выход
-            drawMaze();
-        }
-
-        function generateMaze(x, y) {
-            maze[y][x] = 0;
-            const dirs = [[0, -2], [0, 2], [-2, 0], [2, 0]].sort(() => Math.random() - 0.5);
-            for (let [dx, dy] of dirs) {
-                let nx = x + dx, ny = y + dy;
-                if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && maze[ny][nx] === 1) {
-                    maze[y + dy / 2][x + dx / 2] = 0;
-                    generateMaze(nx, ny);
-                }
+            } catch (e) {
+                console.error("Ошибка получения статистики Proxmox:", e);
             }
         }
 
-        function drawMaze() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let y = 0; y < rows; y++) {
-                for (let x = 0; x < cols; x++) {
-                    if (maze[y][x] === 1) {
-                        ctx.fillStyle = '#334155';
-                        ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
-                    }
-                }
-            }
-            // Draw Goal
-            ctx.fillStyle = '#10b981';
-            ctx.fillRect(goal.x * gridSize + 4, goal.y * gridSize + 4, gridSize - 8, gridSize - 8);
-            // Draw Player
-            ctx.fillStyle = '#00d2ff';
-            ctx.beginPath();
-            ctx.arc(player.x * gridSize + gridSize / 2, player.y * gridSize + gridSize / 2, gridSize / 3, 0, Math.PI * 2);
-            ctx.fill();
+        setInterval(updatePVEStats, 8000);
+        updatePVEStats(); // первый запуск сразу
+
+        // Открытие игры в новой вкладке
+        function openMazeGame() {
+            window.open('maze.html', '_blank');
         }
-
-        window.addEventListener('keydown', (e) => {
-            if (document.getElementById('maze-overlay').style.display !== 'flex') return;
-            let nx = player.x, ny = player.y;
-            if (e.key === 'ArrowUp') ny--;
-            if (e.key === 'ArrowDown') ny++;
-            if (e.key === 'ArrowLeft') nx--;
-            if (e.key === 'ArrowRight') nx++;
-
-            if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && maze[ny][nx] === 0) {
-                player.x = nx; player.y = ny;
-                drawMaze();
-                if (player.x === goal.x && player.y === goal.y) {
-                    alert('ПОБЕДА! Лабиринт пройден.');
-                    initMaze();
-                }
-            }
-        });
     </script>
 </body>
 </html>

@@ -1,37 +1,119 @@
 /* maze.css */
 body {
-    margin: 0; background: #020617; color: white;
-    font-family: 'Inter', sans-serif; display: flex;
-    flex-direction: column; align-items: center; justify-content: center;
-    height: 100vh; overflow: hidden; outline: none; touch-action: none;
+    margin: 0;
+    background: #020617;
+    color: white;
+    font-family: "Segoe UI Emoji", "Noto Color Emoji", "Symbola", "DejaVu Sans", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    overflow: hidden;
+    outline: none;
+    touch-action: none;
 }
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
 .header-info {
-    display: flex; justify-content: space-between;
-    max-width: min(90vw, 600px); margin-bottom: 10px; font-weight: bold; font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    max-width: min(90vw, 600px);
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    padding: 10px;
 }
-.canvas-wrapper {
-    border: 3px solid #1e293b; border-radius: 12px;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8); 
-    line-height: 0; 
-    position: relative; 
+
+.main-content {
+    display: flex;
+    flex: 1;
+    width: 100%;
     overflow: hidden;
 }
-canvas { max-width: min(90vw, 600px); max-height: 55vh; background: #020617; }
-.lvl-text { color: #00d2ff; }
-.win-msg { 
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    color: #10b981; font-weight: bold; font-size: 2rem; display: none; 
-    text-shadow: 0 0 20px #10b981; z-index: 20; background: rgba(2,6,23,0.9);
-    padding: 20px; border-radius: 15px; border: 2px solid #10b981;
+
+.side-panel {
+    width: 200px;
+    padding: 10px;
+    background: #1e293b;
+    border-radius: 8px;
+    margin: 10px;
+    overflow-y: auto;
+    display: none; /* По умолчанию скрыты */
 }
+
+.help-panel h3,
+.table-panel h3 {
+    margin-top: 0;
+}
+
+.table-panel table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-panel th,
+.table-panel td {
+    border: 1px solid #334155;
+    padding: 5px;
+}
+
+.center-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.canvas-wrapper {
+    border: 3px solid #1e293b;
+    border-radius: 12px;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    line-height: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+canvas {
+    max-width: min(90vw, 600px);
+    background: #020617;
+}
+
+.lvl-text {
+    color: #00d2ff;
+}
+
+.win-msg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #10b981;
+    font-weight: bold;
+    font-size: 2rem;
+    display: none;
+    text-shadow: 0 0 20px #10b981;
+    z-index: 20;
+    background: rgba(2, 6, 23, 0.9);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #10b981;
+}
+
 /* Контейнер джойстика */
 .controls-container {
     display: none;
-    /* Создаем сетку 3x2 для правильного расположения кнопок */
     grid-template-columns: repeat(3, 70px);
     grid-template-rows: repeat(2, 70px);
     gap: 12px;
-    justify-content: center; /* Центрируем джойстик по горизонтали */
+    justify-content: center;
 }
 
 .btn {
@@ -45,9 +127,9 @@ canvas { max-width: min(90vw, 600px); max-height: 55vh; background: #020617; }
     justify-content: center;
     font-size: 28px;
     color: white;
-    touch-action: none; /* Предотвращает системные жесты при игре */
+    touch-action: none;
     user-select: none;
-    -webkit-tap-highlight-color: transparent; /* Убирает синюю вспышку на Android */
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Эффект нажатия */
@@ -58,38 +140,60 @@ canvas { max-width: min(90vw, 600px); max-height: 55vh; background: #020617; }
 }
 
 /* Позиционирование кнопок в сетке */
-.up {
-    grid-column: 2; /* Вторая колонка */
-    grid-row: 1;    /* Первая строка */
+.up { grid-column: 2; grid-row: 1; }
+.left { grid-column: 1; grid-row: 2; }
+.down { grid-column: 2; grid-row: 2; }
+.right { grid-column: 3; grid-row: 2; }
+
+.toggle-btn {
+    cursor: pointer;
+    margin-left: 10px;
+    font-size: 1.2rem;
 }
 
-.left {
-    grid-column: 1; /* Первая колонка */
-    grid-row: 2;    /* Вторая строка */
+.hide-btn {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background: #334155;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
 }
 
-.down {
-    grid-column: 2; /* Вторая колонка */
-    grid-row: 2;    /* Вторая строка */
+.hide-btn:hover {
+    background: #475569;
 }
 
-.right {
-    grid-column: 3; /* Третья колонка */
-    grid-row: 2;    /* Вторая строка */
-}
-
-/* Показываем джойстик только на тач-устройствах */
+/* Медиа-запросы */
 @media (pointer: coarse) {
-    .controls-container {
-        display: grid;
-    }
-    canvas {
-        max-height: 55vh;
+    .controls-container { display: grid; }
+    canvas { max-height: 55vh; }
+    .mobile-only { display: inline; }
+    .desktop-only { display: none; }
+    .desktop-visible { display: none !important; }
+    .panel-visible {
+        display: block !important;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 100;
+        width: 80vw;
+        max-height: 80vh;
+        overflow-y: auto;
     }
 }
 
 @media (pointer: fine) {
-    canvas {
-        max-height: 80vh;
-    }
+    canvas { max-height: 80vh; }
+    .mobile-only { display: none; }
+    .desktop-only { display: block; }
+    .desktop-visible { display: block; }
+    .center-expanded canvas { max-width: 90vw !important; }
+}
+
+@media (min-width: 768px) {
+    .header-info { max-width: 90vw; }
+    .side-panel { width: 250px; }
 }
