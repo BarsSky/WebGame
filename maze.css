@@ -25,10 +25,10 @@ body {
     display: flex;
     justify-content: space-between;
     max-width: min(90vw, 600px);
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     font-weight: bold;
     font-size: 0.9rem;
-    padding: 10px;
+    padding: 5px 10px;
 }
 
 .main-content {
@@ -69,7 +69,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 5px;
 }
 
 .canvas-wrapper {
@@ -79,6 +80,7 @@ body {
     line-height: 0;
     position: relative;
     overflow: hidden;
+    margin-bottom: 15px;
 }
 
 canvas {
@@ -167,11 +169,25 @@ canvas {
 
 /* Медиа-запросы */
 @media (pointer: coarse) {
-    .controls-container { display: grid; }
-    canvas { max-height: 55vh; }
+    .controls-container { 
+        display: grid;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    canvas { 
+        max-height: 55vh;
+    }
     .mobile-only { display: inline; }
     .desktop-only { display: none; }
     .desktop-visible { display: none !important; }
+    .center-content {
+        justify-content: flex-start;
+        padding-top: 5px;
+    }
+    .header-info {
+        margin-bottom: 3px;
+        font-size: 0.8rem;
+    }
     .panel-visible {
         display: block !important;
         position: fixed;
