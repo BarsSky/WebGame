@@ -53,36 +53,36 @@ function initGame() {
 }
 
 /**
- * Настройка нового уровня (ФИКС: rebind input + focus)
+ * Настройка нового уровня (ФИКС: rebind input + focus + ОЧИСТКА ВВОДА)
  */
 function setupGame() {
-    // 1. Сначала скрываем все мешающие окна [11]
-    clearWinMessage();
-    if (window.storyManager) {
-        window.storyManager.dialogActive = false;
+    engine.initLevel();
+    renderer.resizeCanvas(engine);
+    
+    // ФИКС: Очистка частиц при новом уровне
+    if (renderer.particleSystem) {
+        renderer.particleSystem = [];
     }
 
-    // 2. Инициализируем уровень в движке [4]
-    engine.initLevel();
-    
-    // 3. Обновляем визуальную часть
-    renderer.resizeCanvas(engine);
     gameState.player = { x: 0, y: 0 };
     engine.visitedPath = [{ x: 0, y: 0 }];
-    gameState.paused = false;
-
-    document.body.focus();
-
-    // 4. Сбрасываем управление И ПРИНУДИТЕЛЬНО ФОКУСИРУЕМСЯ [10]
-    inputManager.rebindControls();
     
+    // КРИТИЧЕСКИЙ ФИКС: Полностью очистить состояние ввода
+    inputManager.keys = {};
+    inputManager.lastMoveTime = 0;
+    physicsEngine.lastMoveTime = 0;
+    
+    document.body.focus();  
     updateUI();
+    clearWinMessage();  
 
-    // 5. Проверяем наличие сюжетных вставок (может снова поставить на паузу) [14]
+    // Сброс паузы перед проверкой истории
+    gameState.paused = false; 
+
     const storyShown = storyManager.checkLevelStory(engine.level);
     if (storyShown) {
-        gameState.paused = true;
-    }
+        gameState.paused = true; // StoryManager сам снимет паузу при закрытии
+    }  
 
     renderer.draw(engine, gameState.player);
 }
@@ -132,11 +132,15 @@ function handleWin() {
 
     engine.level++;
     engine.saveProgress();
+    renderer.updateParticles(engine);
 
     setTimeout(() => {
         clearWinMessage();
         gameState.paused = false;
 
+        // ПОЛНАЯ ПЕРЕИНИЦИАЛИЗАЦИЯ ВСЕ СИСТЕМ
+        renderer.initialize();
+        audioManager.initialize();
         physicsEngine.initialize();
         inputManager.rebindControls();
         setupGame();  // Restart level

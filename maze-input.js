@@ -6,6 +6,9 @@ class InputManager {
         this.keys = {};
         this.lastMoveTime = 0;
         this.buttonListeners = new Map();  // Track listeners to avoid duplicates
+        this.keydownHandler = null;
+        this.keyupHandler = null;
+        this.blurHandler = null;
     }
 
     initialize() {
@@ -17,18 +20,27 @@ class InputManager {
     * Сброс управления и фокус (вызывать при смене уровня)
     */
     rebindControls() {
+        // Полностью удалить старые обработчики
+        if (this.keydownHandler) window.removeEventListener('keydown', this.keydownHandler);
+        if (this.keyupHandler) window.removeEventListener('keyup', this.keyupHandler);
+        if (this.blurHandler) window.removeEventListener('blur', this.blurHandler);
+        
         this.keys = {}; // Очистка состояния клавиш во избежание залипания
+        this.buttonListeners = new Map();
+        
         this.bindKeyboard();
         this.setupButtonControls();
-        document.body.focus(); // Возврат фокуса в игру [10][11]
+        document.body.focus(); // Возврат фокуса в игру
         console.log('🔄 Controls rebound');
     }
 
     bindKeyboard() {
-        // Удаляем старые обработчики, чтобы избежать дублирования
-        window.removeEventListener('keydown', this.keydownHandler);
-        window.removeEventListener('keyup', this.keyupHandler);
+        // Удаляем старые обработчики, если они есть
+        if (this.keydownHandler) window.removeEventListener('keydown', this.keydownHandler);
+        if (this.keyupHandler) window.removeEventListener('keyup', this.keyupHandler);
+        if (this.blurHandler) window.removeEventListener('blur', this.blurHandler);
 
+        // Создаём обработчики как методы класса для сохранения ссылки
         this.keydownHandler = (e) => {
             // Игнорируем системные клавиши (Ctrl, Alt), чтобы не блокировать ввод
             if (e.ctrlKey || e.altKey || e.metaKey) {
@@ -46,11 +58,13 @@ class InputManager {
             this.keys[e.key] = false;
         };
 
+        this.blurHandler = () => { 
+            this.keys = {}; 
+        };
+
         window.addEventListener('keydown', this.keydownHandler);
         window.addEventListener('keyup', this.keyupHandler);
-        
-        // Очистка при потере фокуса окном (решение проблемы залипания) [10]
-        window.addEventListener('blur', () => { this.keys = {}; });
+        window.addEventListener('blur', this.blurHandler);
     }
 
     setupButtonControls() {
@@ -67,7 +81,10 @@ class InputManager {
 
             // Удаляем старые слушатели
             ['touchstart', 'touchend', 'mousedown', 'mouseup'].forEach(type => {
-                el.removeEventListener(type, this.buttonListeners.get(`${id}_${type}`));
+                const oldHandler = this.buttonListeners.get(`${id}_${type}`);
+                if (oldHandler) {
+                    el.removeEventListener(type, oldHandler);
+                }
             });
 
             const setKey = (value, e) => {
@@ -88,6 +105,9 @@ class InputManager {
 
             // Сохраняем ссылки для возможного удаления
             this.buttonListeners.set(`${id}_touchstart`, touchstart);
+            this.buttonListeners.set(`${id}_touchend`, touchend);
+            this.buttonListeners.set(`${id}_mousedown`, mousedown);
+            this.buttonListeners.set(`${id}_mouseup`, mouseup);
         });
     }
 

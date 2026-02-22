@@ -116,19 +116,29 @@ class StoryManager {
         }
 
         dialogBox.innerHTML = `
-            <div class="dialog-content">
-                <div class="dialog-name">${name}</div>
-                <div class="dialog-text">${text}</div>
-                <div class="dialog-close">[Нажмите пробел для закрытия]</div>
-            </div>
-        `;
+<div class="dialog-content">
+<div class="dialog-name">${name}</div>
+<div class="dialog-text">${text}</div>
+<div class="dialog-close">[Нажмите пробел для закрытия]</div>
+</div>
+`;
         dialogBox.style.display = 'block';
         this.dialogActive = true;
+        
+        // Ставим игру на паузу при диалоге
+        if (window.gameState) window.gameState.paused = true;
 
         const closeDialog = (e) => {
             if (e.key === ' ' || e.type === 'click') {
                 dialogBox.style.display = 'none';
                 this.dialogActive = false;
+                
+                // Снимаем игру с паузы
+                if (window.gameState) window.gameState.paused = false;
+                
+                // Восстанавливаем фокус и управление
+                if (window.inputManager) window.inputManager.rebindControls();
+                
                 window.removeEventListener('keydown', closeDialog);
                 dialogBox.removeEventListener('click', closeDialog);
             }
@@ -139,23 +149,35 @@ class StoryManager {
     }
 
     /**
-     * Показать историю (более длинное сообщение)
-     */
+    * Показать историю (при переходе уровня)
+    */
     showStoryDialog(title, text) {
         const storyBox = document.createElement('div');
         storyBox.className = 'story-dialog';
         storyBox.innerHTML = `
-            <div class="story-content">
-                <h2>${title}</h2>
-                <p>${text}</p>
-                <div class="story-close">[Нажмите пробел]</div>
-            </div>
-        `;
+<div class="story-content">
+<h2>${title}</h2>
+<p>${text}</p>
+<div class="story-close">[Нажмите пробел]</div>
+</div>
+`;
         document.body.appendChild(storyBox);
+        
+        this.dialogActive = true;
+        // Пауза уже должна быть выставлена в setupGame, но для надежности:
+        if (window.gameState) window.gameState.paused = true;
 
         const closeStory = (e) => {
             if (e.key === ' ') {
                 storyBox.remove();
+                this.dialogActive = false;
+                
+                // ВАЖНО: Снимаем паузу, чтобы игра продолжилась
+                if (window.gameState) window.gameState.paused = false;
+                
+                // Восстанавливаем управление
+                if (window.inputManager) window.inputManager.rebindControls();
+
                 window.removeEventListener('keydown', closeStory);
             }
         };
