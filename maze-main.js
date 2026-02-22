@@ -1,0 +1,264 @@
+/**
+ * maze-main.js
+ * Главный файл управления игрой и основной игровой цикл
+ */
+
+// Глобальное состояние игры
+let gameState = {
+    player: { x: 0, y: 0 },
+    paused: false
+};
+
+// Сразу добавляем в window
+window.gameState = gameState;
+
+// Менеджеры компонентов
+let engine;
+let renderer;
+let inputManager;
+let audioManager;
+let physicsEngine;
+let storyManager;
+
+/**
+ * Инициализация игры
+ */
+function initGame() {
+    engine = new MazeEngine();
+    renderer = new MazeRenderer('maze');
+    inputManager = new InputManager();
+    audioManager = new AudioManager();
+    physicsEngine = new PhysicsEngine();
+    storyManager = new StoryManager();
+
+    // Сделать глобально доступными для отладки
+    window.engine = engine;
+    window.renderer = renderer;
+    window.inputManager = inputManager;
+    window.audioManager = audioManager;
+    window.physicsEngine = physicsEngine;
+    window.storyManager = storyManager;
+    window.gameState = gameState;
+
+    renderer.initialize();
+    inputManager.initialize();
+    audioManager.initialize();
+    physicsEngine.initialize();
+    storyManager.initialize?.();
+
+    setupGame();
+    
+    // Запуск игрового цикла
+    requestAnimationFrame(gameLoop);
+}
+
+/**
+ * Настройка нового уровня (ФИКС: rebind input + focus)
+ */
+function setupGame() {
+    // 1. Сначала скрываем все мешающие окна [11]
+    clearWinMessage();
+    if (window.storyManager) {
+        window.storyManager.dialogActive = false;
+    }
+
+    // 2. Инициализируем уровень в движке [4]
+    engine.initLevel();
+    
+    // 3. Обновляем визуальную часть
+    renderer.resizeCanvas(engine);
+    gameState.player = { x: 0, y: 0 };
+    engine.visitedPath = [{ x: 0, y: 0 }];
+    gameState.paused = false;
+
+    document.body.focus();
+
+    // 4. Сбрасываем управление И ПРИНУДИТЕЛЬНО ФОКУСИРУЕМСЯ [10]
+    inputManager.rebindControls();
+    
+    updateUI();
+
+    // 5. Проверяем наличие сюжетных вставок (может снова поставить на паузу) [14]
+    const storyShown = storyManager.checkLevelStory(engine.level);
+    if (storyShown) {
+        gameState.paused = true;
+    }
+
+    renderer.draw(engine, gameState.player);
+}
+/**
+ * Основной игровой цикл (ФИКС: check dialogActive)
+ */
+function gameLoop(timestamp) {
+    if (!gameState.paused && !storyManager.dialogActive) {
+        // Обновление движения
+        const moveResult = physicsEngine.updateMovement(gameState.player, engine, inputManager, timestamp);
+        
+        if (moveResult.moved) {
+            audioManager.play('step');
+            renderer.addParticles(gameState.player.x * engine.cellSize, gameState.player.y * engine.cellSize, '#00d2ff');
+        } else if (moveResult.blocked) {
+            audioManager.play('lock');
+        }
+
+        // Проверка коллизий
+        const collected = physicsEngine.checkCollisions(gameState.player, engine, audioManager, storyManager);
+        if (collected.length > 0) {
+            renderer.addParticles(gameState.player.x * engine.cellSize, gameState.player.y * engine.cellSize, '#fbbf24');
+        }
+
+        // Проверка победы
+        if (physicsEngine.checkWinCondition(gameState.player, engine)) {
+            handleWin();
+            return;
+        }
+
+        // Отрисовка + particles
+        renderer.updateParticles(engine);
+        renderer.draw(engine, gameState.player);
+        updateUI();
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+/**
+ * Обработка победы (full, no truncation)
+ */
+function handleWin() {
+    gameState.paused = true;
+    showWinMessage();
+    audioManager.play('win');
+
+    engine.level++;
+    engine.saveProgress();
+
+    setTimeout(() => {
+        clearWinMessage();
+        gameState.paused = false;
+
+        physicsEngine.initialize();
+        inputManager.rebindControls();
+        setupGame();  // Restart level
+    }, 2000);  // 2s delay
+}
+
+/**
+ * Update UI (opacity key/book)
+ */
+function updateUI() {
+    const keyUI = document.getElementById('key-status');
+    const bookUI = document.getElementById('book-status');
+    const visionUI = document.getElementById('vision-val');
+    const levelUI = document.getElementById('level-val');
+
+    if (keyUI) keyUI.style.opacity = engine.hasKey ? '1' : '0.3';
+    if (bookUI) bookUI.style.opacity = engine.hasBook ? '1' : '0.2';
+    if (visionUI) visionUI.textContent = engine.level < 5 ? 'Wide' : (engine.level < 10 ? 'Med' : 'Narrow');
+    if (levelUI) levelUI.textContent = engine.level;
+}
+/**
+ * Показать сообщение о победе
+ */
+function showWinMessage() {
+    const winMsg = document.getElementById('win');
+    if (winMsg) {
+        winMsg.style.display = 'block';
+    }
+}
+
+/**
+ * Скрыть сообщение о победе
+ */
+function clearWinMessage() {
+    const winMsg = document.getElementById('win');
+    if (winMsg) {
+        winMsg.style.display = 'none';
+    }
+}
+
+/**
+ * Сброс игры в начало
+ */
+function resetGame() {
+    if (confirm('Вы уверены? Это обнулит ваш прогресс!')) {
+        engine.resetProgress();
+        setupGame();
+    }
+}
+
+/**
+ * Управление панелями справки
+ */
+function togglePanel(panel) {
+    const el = document.getElementById(panel + '-panel');
+    if (el.classList.contains('panel-visible')) {
+        el.classList.remove('panel-visible');
+    } else {
+        const other = panel === 'help' ? 'table' : 'help';
+        const otherEl = document.getElementById(other + '-panel');
+        if (otherEl) otherEl.classList.remove('panel-visible');
+        el.classList.add('panel-visible');
+    }
+}
+
+/**
+ * Скрыть панель
+ */
+function hidePanel(panel) {
+    const el = document.getElementById(panel + '-panel');
+    if (el) el.style.display = 'none';
+    
+    const centerContent = document.querySelector('.center-content');
+    if (centerContent) {
+        const helpHidden = !document.getElementById('help-panel')?.style.display;
+        const tableHidden = !document.getElementById('table-panel')?.style.display;
+        if (helpHidden && tableHidden) {
+            centerContent.classList.add('center-expanded');
+        } else {
+            centerContent.classList.remove('center-expanded');
+        }
+    }
+    
+    renderer.resizeCanvas(engine);
+    renderer.draw(engine, gameState.player);
+}
+
+/**
+ * Обработка изменения размера окна
+ */
+window.addEventListener('resize', () => {
+    renderer.resizeCanvas(engine);
+    renderer.draw(engine, gameState.player);
+});
+
+/**
+ * Запуск игры при загрузке страницы
+ */
+function startGame() {
+    console.log('🎮 Инициализирую игру...');
+    try {
+        initGame();
+        console.log('✅ Игра инициализирована успешно');
+        console.log('✅ Все компоненты:', {
+            engine: !!window.engine,
+            renderer: !!window.renderer,
+            inputManager: !!window.inputManager,
+            physicsEngine: !!window.physicsEngine,
+            audioManager: !!window.audioManager,
+            storyManager: !!window.storyManager
+        });
+    } catch (e) {
+        console.error('❌ Ошибка при инициализации:', e);
+        console.error('Stack:', e.stack);
+    }
+}
+
+// Проверяем, уже ли DOM загружен
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', startGame);
+} else {
+    // DOM уже загружен, вызываем прямо
+    console.log('⚠️ DOM уже загружен, инициализирую сразу');
+    startGame();
+}

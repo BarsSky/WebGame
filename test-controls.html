@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест Управления - SKYNAS Maze</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #00d2ff;
+        }
+        
+        .section {
+            background: #16213e;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #00d2ff;
+        }
+        
+        .section h2 {
+            color: #00d2ff;
+            margin-top: 0;
+        }
+        
+        .logs {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .log-ok { color: #10b981; }
+        .log-error { color: #ef4444; }
+        .log-info { color: #fbbf24; }
+        .log-debug { color: #6366f1; }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #0f3460;
+            border: 2px solid #00d2ff;
+            color: #00d2ff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: #00d2ff;
+            color: #0f3460;
+        }
+        
+        .keys-display {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .key-indicator {
+            padding: 10px;
+            background: #1a1a2e;
+            border: 2px solid #334155;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .key-indicator.active {
+            border-color: #10b981;
+            background: #0f3460;
+            color: #10b981;
+        }
+        
+        .player-info {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .info-item {
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 5px;
+        }
+        
+        .info-label {
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .info-value {
+            color: #10b981;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Тест Управления - SKYNAS Maze</h1>
+        
+        <!-- Загрузка скриптов игры -->
+        <script src="maze-engine.js"></script>
+        <script src="maze-renderer.js"></script>
+        <script src="maze-input.js"></script>
+        <script src="maze-audio.js"></script>
+        <script src="maze-physics.js"></script>
+        <script src="maze-story.js"></script>
+        <script src="maze-main.js"></script>
+        
+        <!-- Информация о входе -->
+        <div class="section">
+            <h2>⌨️ Информация о Входе</h2>
+            <div class="keys-display">
+                <div class="key-indicator" id="key-up">⬆️ UP</div>
+                <div class="key-indicator" id="key-down">⬇️ DOWN</div>
+                <div class="key-indicator" id="key-left">⬅️ LEFT</div>
+                <div class="key-indicator" id="key-right">➡️ RIGHT</div>
+                <div class="key-indicator" id="key-w">W</div>
+                <div class="key-indicator" id="key-a">A</div>
+                <div class="key-indicator" id="key-s">S</div>
+                <div class="key-indicator" id="key-d">D</div>
+            </div>
+            <p>💡 Нажимайте стрелки или WASD - индикаторы должны светиться зеленым</p>
+        </div>
+        
+        <!-- Информация об игроке -->
+        <div class="section">
+            <h2>👤 Информация об Игроке</h2>
+            <div class="player-info">
+                <div class="info-item">
+                    <div class="info-label">Позиция X</div>
+                    <div class="info-value" id="player-x">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Позиция Y</div>
+                    <div class="info-value" id="player-y">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Уровень</div>
+                    <div class="info-value" id="level">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Размер лабиринта</div>
+                    <div class="info-value" id="maze-size">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Логи -->
+        <div class="section">
+            <h2>📊 Логи Команд</h2>
+            <div class="controls">
+                <button onclick="testControls()">🧪 Тест Управления</button>
+                <button onclick="movePlayer('up')">⬆️ Вверх</button>
+                <button onclick="movePlayer('down')">⬇️ Вниз</button>
+                <button onclick="movePlayer('left')">⬅️ Влево</button>
+                <button onclick="movePlayer('right')">➡️ Вправо</button>
+                <button onclick="clearLogs()">🗑️ Очистить</button>
+            </div>
+            <div class="logs" id="logs"></div>
+        </div>
+    </div>
+    
+    <script>
+        const logsDiv = document.getElementById('logs');
+        
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function clearLogs() {
+            logsDiv.innerHTML = '';
+        }
+        
+        function updateKeyIndicators() {
+            const keys = [
+                { id: 'key-up', key: 'ArrowUp' },
+                { id: 'key-down', key: 'ArrowDown' },
+                { id: 'key-left', key: 'ArrowLeft' },
+                { id: 'key-right', key: 'ArrowRight' },
+                { id: 'key-w', key: 'w' },
+                { id: 'key-a', key: 'a' },
+                { id: 'key-s', key: 's' },
+                { id: 'key-d', key: 'd' }
+            ];
+            
+            keys.forEach(({id, key}) => {
+                const el = document.getElementById(id);
+                if (window.inputManager && window.inputManager.keys[key]) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
+        
+        function updatePlayerInfo() {
+            if (!window.gameState || !window.engine) return;
+            
+            document.getElementById('player-x').textContent = window.gameState.player.x;
+            document.getElementById('player-y').textContent = window.gameState.player.y;
+            document.getElementById('level').textContent = window.engine.level;
+            document.getElementById('maze-size').textContent = 
+                window.engine.cols + ' × ' + window.engine.rows;
+        }
+        
+        function testControls() {
+            log('🧪 Начинаю тест управления...', 'debug');
+            
+            if (!window.inputManager) {
+                log('❌ inputManager не найден!', 'error');
+                return;
+            }
+            
+            log('✅ inputManager инициализирован', 'ok');
+            
+            // Тест ArrowUp
+            window.inputManager.keys['ArrowUp'] = true;
+            const upDir = window.inputManager.getMovementDirection();
+            if (upDir.dx === 0 && upDir.dy === -1) {
+                log('✅ ArrowUp работает (0, -1)', 'ok');
+            } else {
+                log(`❌ ArrowUp не работает (${upDir.dx}, ${upDir.dy})`, 'error');
+            }
+            window.inputManager.keys['ArrowUp'] = false;
+            
+            // Тест ArrowDown
+            window.inputManager.keys['ArrowDown'] = true;
+            const downDir = window.inputManager.getMovementDirection();
+            if (downDir.dx === 0 && downDir.dy === 1) {
+                log('✅ ArrowDown работает (0, 1)', 'ok');
+            } else {
+                log(`❌ ArrowDown не работает (${downDir.dx}, ${downDir.dy})`, 'error');
+            }
+            window.inputManager.keys['ArrowDown'] = false;
+            
+            // Тест ArrowLeft
+            window.inputManager.keys['ArrowLeft'] = true;
+            const leftDir = window.inputManager.getMovementDirection();
+            if (leftDir.dx === -1 && leftDir.dy === 0) {
+                log('✅ ArrowLeft работает (-1, 0)', 'ok');
+            } else {
+                log(`❌ ArrowLeft не работает (${leftDir.dx}, ${leftDir.dy})`, 'error');
+            }
+            window.inputManager.keys['ArrowLeft'] = false;
+            
+            // Тест ArrowRight
+            window.inputManager.keys['ArrowRight'] = true;
+            const rightDir = window.inputManager.getMovementDirection();
+            if (rightDir.dx === 1 && rightDir.dy === 0) {
+                log('✅ ArrowRight работает (1, 0)', 'ok');
+            } else {
+                log(`❌ ArrowRight не работает (${rightDir.dx}, ${rightDir.dy})`, 'error');
+            }
+            window.inputManager.keys['ArrowRight'] = false;
+            
+            log('✅ Тест завершен!', 'ok');
+        }
+        
+        function movePlayer(direction) {
+            if (!window.gameState || !window.physicsEngine || !window.engine) {
+                log('❌ Игра не инициализирована', 'error');
+                return;
+            }
+            
+            let dx = 0, dy = 0;
+            switch(direction) {
+                case 'up': dy = -1; break;
+                case 'down': dy = 1; break;
+                case 'left': dx = -1; break;
+                case 'right': dx = 1; break;
+            }
+            
+            const nx = window.gameState.player.x + dx;
+            const ny = window.gameState.player.y + dy;
+            
+            if (window.physicsEngine.isValidMove(nx, ny, window.engine)) {
+                window.gameState.player.x = nx;
+                window.gameState.player.y = ny;
+                log(`✅ Переместились ${direction.toUpperCase()} на (${nx}, ${ny})`, 'ok');
+            } else {
+                log(`❌ Не можем переместиться на (${nx}, ${ny}) - стена!`, 'error');
+            }
+            
+            updatePlayerInfo();
+        }
+        
+        // Обновляем индикаторы в реальном времени
+        setInterval(updateKeyIndicators, 50);
+        
+        // Обновляем информацию об игроке
+        setInterval(updatePlayerInfo, 100);
+        
+        // Начальный лог
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🎮 Система инициализирована', 'ok');
+                log('💡 Нажимайте стрелки или WASD для управления', 'info');
+                log('🧪 Нажимайте "Тест Управления" для проверки', 'info');
+                updatePlayerInfo();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

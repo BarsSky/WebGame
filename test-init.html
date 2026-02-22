@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тест инициализации модулей</title>
+    <style>
+        body { background: #1a1a2e; color: white; font-family: Arial; padding: 20px; }
+        .status { padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .ok { background: #10b981; }
+        .error { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Тест загрузки модулей</h1>
+    <div id="output"></div>
+
+    <script src="maze-engine.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ maze-engine.js загружен</div>';
+        if (typeof MazeEngine === 'undefined') {
+            output += '<div class="status error">❌ MazeEngine не определен!</div>';
+        } else {
+            output += '<div class="status ok">✅ MazeEngine класс найден</div>';
+        }
+        document.getElementById('output').innerHTML += output;
+    </script>
+
+    <script src="maze-renderer.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ maze-renderer.js загружен</div>';
+        if (typeof MazeRenderer === 'undefined') {
+            output += '<div class="status error">❌ MazeRenderer не определен!</div>';
+        } else {
+            output += '<div class="status ok">✅ MazeRenderer класс найден</div>';
+        }
+        document.getElementById('output').innerHTML += output;
+    </script>
+
+    <script src="maze-input.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ maze-input.js загружен</div>';
+        if (typeof InputManager === 'undefined') {
+            output += '<div class="status error">❌ InputManager не определен!</div>';
+        } else {
+            output += '<div class="status ok">✅ InputManager класс найден</div>';
+        }
+        document.getElementById('output').innerHTML += output;
+    </script>
+
+    <script src="maze-audio.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ maze-audio.js загружен</div>';
+        if (typeof AudioManager === 'undefined') {
+            output += '<div class="status error">❌ AudioManager не определен!</div>';
+        } else {
+            output += '<div class="status ok">✅ AudioManager класс найден</div>';
+        }
+        document.getElementById('output').innerHTML += output;
+    </script>
+
+    <script src="maze-physics.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ maze-physics.js загружен</div>';
+        if (typeof PhysicsEngine === 'undefined') {
+            output += '<div class="status error">❌ PhysicsEngine не определен!</div>';
+        } else {
+            output += '<div class="status ok">✅ PhysicsEngine класс найден</div>';
+        }
+        document.getElementById('output').innerHTML += output;
+    </script>
+
+    <script src="maze-story.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ maze-story.js загружен</div>';
+        if (typeof StoryManager === 'undefined') {
+            output += '<div class="status error">❌ StoryManager не определен!</div>';
+        } else {
+            output += '<div class="status ok">✅ StoryManager класс найден</div>';
+        }
+        document.getElementById('output').innerHTML += output;
+    </script>
+
+    <script src="maze-main.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ maze-main.js загружен</div>';
+        if (typeof initGame === 'undefined') {
+            output += '<div class="status error">❌ initGame не определена!</div>';
+        } else {
+            output += '<div class="status ok">✅ initGame функция найдена</div>';
+        }
+        document.getElementById('output').innerHTML += output;
+    </script>
+
+    <script src="DEBUG.js"></script>
+    <script>
+        let output = '<div class="status ok">✅ DEBUG.js загружен</div>';
+        document.getElementById('output').innerHTML += output;
+        
+        // Финальная проверка
+        document.getElementById('output').innerHTML += '<hr>';
+        console.log('🔍 Проверяю window объекты...');
+        if (window.engine) {
+            document.getElementById('output').innerHTML += '<div class="status ok">✅ window.engine - OK</div>';
+        } else {
+            document.getElementById('output').innerHTML += '<div class="status error">❌ window.engine - NOT FOUND</div>';
+        }
+    </script>
+</body>
+</html>
