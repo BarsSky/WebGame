@@ -89,9 +89,8 @@ class MazeRenderer {
         // 3. Выход
         this.drawExit(engine);
 
-        // 4. Предметы
-        if (!engine.hasKey) this.drawItem(engine.keyPos, '#fbbf24', engine);
-        if (engine.level >= 10 && !engine.hasBook) this.drawItem(engine.bookPos, '#a855f7', engine);
+        // 4. Предметы (сокровища)
+        this.drawTreasures(engine);
 
         // 5. NPC
         this.drawNPCs(engine);
@@ -107,9 +106,14 @@ class MazeRenderer {
         // 8. Частицы (отрисовываются ВНУТРИ transformed контекста)
         this.updateParticles(engine, px, py);
 
+        // 9. Светлячок-компас (начиная с 17 уровня)
+        if (engine.level >= 17) {
+            this.drawCompassBeacon(engine, px, py);
+        }
+
         this.ctx.restore();
 
-        // 9. Туман войны
+        // 10. Туман войны
         this.applyFog(px, py, engine);
     }
 
@@ -138,6 +142,28 @@ class MazeRenderer {
         this.ctx.shadowColor = color;
         this.ctx.fillRect(pos.x * engine.cellSize + offset, pos.y * engine.cellSize + offset, size, size);
         this.ctx.shadowBlur = 0;
+    }
+
+    /**
+     * Отрисовка сокровищ
+     */
+    drawTreasures(engine) {
+        for (let treasure of engine.treasures) {
+            if (!treasure.collected) {
+                let color;
+                switch (treasure.type) {
+                    case 'key':
+                        color = '#fbbf24'; // Желтый для ключа
+                        break;
+                    case 'book':
+                        color = '#a855f7'; // Фиолетовый для книги
+                        break;
+                    default:
+                        color = '#fbbf24'; // Цвет по умолчанию
+                }
+                this.drawItem(treasure.pos, color, engine);
+            }
+        }
     }
 
     /**
@@ -318,5 +344,102 @@ class MazeRenderer {
             
             return p.life > 0;
         });
+    }
+
+    /**
+     * Отрисовка светлячка-компаса, указывающего направление к ближайшему сокровищу или выходу
+     */
+    drawCompassBeacon(engine, playerX, playerY) {
+        // Проверяем, есть ли несобранные сокровища
+        const uncollectedTreasures = engine.treasures.filter(t => !t.collected);
+        
+        let targetPos;
+        let beaconColor = '#10b981'; // Зеленый цвет для светлячка
+        
+        if (uncollectedTreasures.length > 0) {
+            // Находим ближайшее сокровище
+            let closestTreasure = uncollectedTreasures[0];
+            let minDistance = this.calculateDistance(
+                playerX / engine.cellSize,
+                playerY / engine.cellSize,
+                closestTreasure.pos.x,
+                closestTreasure.pos.y
+            );
+            
+            for (let i = 1; i < uncollectedTreasures.length; i++) {
+                const dist = this.calculateDistance(
+                    playerX / engine.cellSize,
+                    playerY / engine.cellSize,
+                    uncollectedTreasures[i].pos.x,
+                    uncollectedTreasures[i].pos.y
+                );
+                
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestTreasure = uncollectedTreasures[i];
+                }
+            }
+            
+            targetPos = closestTreasure.pos;
+            // Меняем цвет в зависимости от типа сокровища
+            if (closestTreasure.type === 'key') {
+                beaconColor = '#fbbf24'; // Желтый для ключа
+            } else if (closestTreasure.type === 'book') {
+                beaconColor = '#a855f7'; // Фиолетовый для книги
+            }
+        } else {
+            // Если все сокровища собраны, показываем направление к выходу
+            targetPos = { x: engine.cols - 1, y: engine.rows - 1 };
+            beaconColor = '#ec4899'; // Розовый для выхода
+        }
+        
+        // Рассчитываем угол к цели
+        const angleToTarget = Math.atan2(
+            targetPos.y * engine.cellSize - playerY,
+            targetPos.x * engine.cellSize - playerX
+        );
+        
+        // Рассчитываем позицию светлячка на окружности вокруг игрока
+        const beaconRadius = 40; // Радиус окружности, по которой движется светлячок
+        const currentTime = Date.now();
+        
+        // Вращение светлячка
+        const rotationSpeed = 0.005; // Скорость вращения
+        const rotationAngle = (currentTime * rotationSpeed) % (Math.PI * 2);
+        const beaconAngle = angleToTarget + rotationAngle;
+        
+        // Позиция светлячка с учетом вращения
+        const beaconX = playerX + Math.cos(beaconAngle) * beaconRadius;
+        const beaconY = playerY + Math.sin(beaconAngle) * beaconRadius;
+        
+        // Рассчитываем расстояние до цели для изменения частоты мигания
+        const distanceToTarget = this.calculateDistance(
+            playerX / engine.cellSize,
+            playerY / engine.cellSize,
+            targetPos.x,
+            targetPos.y
+        );
+        
+        // Частота мигания зависит от расстояния - чем ближе, тем чаще мигает
+        const blinkFrequency = Math.max(0.1, Math.min(1, 1 - (distanceToTarget / (engine.cols + engine.rows))));
+        const blinkIntensity = (Math.sin(currentTime * blinkFrequency * 5) + 1) / 2; // От 0 до 1
+        
+        // Рисуем светлячок
+        this.ctx.save();
+        this.ctx.globalAlpha = 0.7 + 0.3 * blinkIntensity; // Меняем прозрачность для эффекта мигания
+        this.ctx.fillStyle = beaconColor;
+        this.ctx.shadowBlur = 15 * blinkIntensity;
+        this.ctx.shadowColor = beaconColor;
+        this.ctx.beginPath();
+        this.ctx.arc(beaconX, beaconY, 5, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+    
+    /**
+     * Вспомогательная функция для вычисления расстояния между двумя точками
+     */
+    calculateDistance(x1, y1, x2, y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     }
 }

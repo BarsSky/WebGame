@@ -89,6 +89,7 @@ function setupGame() {
     window.__setupGameTime = performance.now();
     renderer.draw(engine, gameState.player);
 }
+
 /**
  * Основной игровой цикл (ФИКС: check dialogActive)
  */
@@ -184,11 +185,16 @@ function updateUI() {
     const visionUI = document.getElementById('vision-val');
     const levelUI = document.getElementById('level-val');
 
-    if (keyUI) keyUI.style.opacity = engine.hasKey ? '1' : '0.3';
-    if (bookUI) bookUI.style.opacity = engine.hasBook ? '1' : '0.2';
+    // Проверяем наличие сокровищ через новый формат
+    const hasKey = engine.treasures.some(t => t.type === 'key' && t.collected);
+    const hasBook = engine.treasures.some(t => t.type === 'book' && t.collected);
+    
+    if (keyUI) keyUI.style.opacity = hasKey ? '1' : '0.3';
+    if (bookUI) bookUI.style.opacity = hasBook ? '1' : '0.2';
     if (visionUI) visionUI.textContent = engine.level < 5 ? 'Wide' : (engine.level < 10 ? 'Med' : 'Narrow');
     if (levelUI) levelUI.textContent = engine.level;
 }
+
 /**
  * Показать сообщение о победе
  */
@@ -206,6 +212,51 @@ function clearWinMessage() {
     const winMsg = document.getElementById('win');
     if (winMsg) {
         winMsg.style.display = 'none';
+    }
+}
+
+/**
+ * Смена уровня лабиринта
+ */
+function changeLevel(newLevel) {
+    if (typeof newLevel !== 'number' || newLevel < 1) {
+        console.warn('⚠️ Неверный номер уровня:', newLevel);
+        return;
+    }
+    
+    // Сохраняем прогресс текущего уровня перед сменой
+    if (window.engine && typeof window.engine.saveProgress === 'function') {
+        window.engine.saveProgress();
+    }
+    
+    // Устанавливаем новый уровень
+    if (window.engine) {
+        window.engine.level = newLevel;
+        
+        // Обновляем прогресс в localStorage
+        localStorage.setItem('skynas_maze_level', newLevel);
+        
+        console.log(`✅ Уровень изменен на: ${newLevel}`);
+        
+        // Перезагружаем игру с новым уровнем
+        setupGame();
+    } else {
+        console.error('❌ Engine не инициализирован');
+    }
+}
+
+/**
+ * Интерактивная смена уровня через консоль
+ */
+function selectLevel() {
+    const levelStr = prompt('Введите номер уровня (1-50):');
+    if (levelStr !== null) {
+        const level = parseInt(levelStr);
+        if (!isNaN(level) && level >= 1 && level <= 50) {
+            changeLevel(level);
+        } else {
+            console.warn('⚠️ Неверный номер уровня. Введите число от 1 до 50.');
+        }
     }
 }
 

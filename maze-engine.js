@@ -8,8 +8,7 @@ class MazeEngine {
         const savedLevel = localStorage.getItem('skynas_maze_level');
         this.level = savedLevel ? parseInt(savedLevel) : 1;
         this.grid = [];
-        this.keyPos = { x: 0, y: 0 };
-        this.bookPos = { x: 0, y: 0 };
+        this.treasures = []; // Массив для хранения сокровищ
         this.npcPos = [];
         this.hasKey = false;
         this.hasBook = false;
@@ -53,21 +52,22 @@ class MazeEngine {
 
         this.hasKey = false;
         this.hasBook = false;
+        this.treasures = []; // Инициализируем массив сокровищ
         this.visitedPath = [];
         this.npcPos = [];
         this.dialogState = {};
 
-        // Координаты выхода для исключения при спавне ключа
+        // Координаты выхода для исключения при спавне сокровищ
         const exitPos = { x: this.cols - 1, y: this.rows - 1 };
 
         // Размещаем КЛЮЧ (исключая старт и выход)
-        this.keyPos = this._getRandomEmptyCell([exitPos]);
+        const keyPos = this._getRandomEmptyCell([exitPos]);
+        this.treasures.push({ type: 'key', pos: keyPos, collected: false });
 
         if (this.level >= 10) {
             // Размещаем КНИГУ (исключая старт, выход и ключ)
-            this.bookPos = this._getRandomEmptyCell([exitPos, this.keyPos]);
-        } else {
-            this.bookPos = { x: -1, y: -1 };
+            const bookPos = this._getRandomEmptyCell([exitPos, keyPos]);
+            this.treasures.push({ type: 'book', pos: bookPos, collected: false });
         }
 
         // Спавн NPC на определенных уровнях

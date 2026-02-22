@@ -71,19 +71,20 @@ class PhysicsEngine {
     checkCollisions(player, engine, audio, story) {
         let collected = [];
 
-        // Сбор ключа
-        if (!engine.hasKey && player.x === engine.keyPos.x && player.y === engine.keyPos.y) {
-            engine.hasKey = true;
-            audio?.play('get');
-            collected.push('key');
-        }
-
-        // Сбор книги
-        if (engine.level >= 10 && !engine.hasBook && 
-            player.x === engine.bookPos.x && player.y === engine.bookPos.y) {
-            engine.hasBook = true;
-            audio?.play('get');
-            collected.push('book');
+        // Проверка сокровищ
+        for (let treasure of engine.treasures) {
+            if (!treasure.collected && player.x === treasure.pos.x && player.y === treasure.pos.y) {
+                treasure.collected = true;
+                
+                if (treasure.type === 'key') {
+                    engine.hasKey = true;
+                } else if (treasure.type === 'book') {
+                    engine.hasBook = true;
+                }
+                
+                audio?.play('get');
+                collected.push(treasure.type);
+            }
         }
 
         // Взаимодействие с NPC
