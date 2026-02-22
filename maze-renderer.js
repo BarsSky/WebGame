@@ -99,13 +99,18 @@ class MazeRenderer {
         // 6. Игрок
         this.drawPlayer(px, py, engine);
 
+        // 7. Стена вокруг границ (для уровней > 15 с фиксированной камерой)
+        if (engine.level > 15) {
+            this.drawBoundaryWall(engine);
+        }
+
+        // 8. Частицы (отрисовываются ВНУТРИ transformed контекста)
+        this.updateParticles(engine, px, py);
+
         this.ctx.restore();
 
-        // 7. Туман войны
+        // 9. Туман войны
         this.applyFog(px, py, engine);
-
-        // 8. Частицы
-        this.updateParticles(engine);
     }
 
     /**
@@ -171,6 +176,31 @@ class MazeRenderer {
         this.ctx.arc(px, py, engine.cellSize / 3, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.shadowBlur = 0;
+    }
+
+    /**
+     * Отрисовка стены вокруг границ лабиринта (уровни > 15)
+     */
+    drawBoundaryWall(engine) {
+        const cellSize = engine.cellSize;
+        const cols = engine.cols;
+        const rows = engine.rows;
+        const wallThickness = cellSize * 0.5;
+
+        // Используем текстуру стены
+        this.ctx.fillStyle = this.wallPattern;
+        
+        // Верхняя стена
+        this.ctx.fillRect(-wallThickness, -wallThickness, cols * cellSize + wallThickness * 2, wallThickness);
+        
+        // Нижняя стена
+        this.ctx.fillRect(-wallThickness, rows * cellSize, cols * cellSize + wallThickness * 2, wallThickness);
+        
+        // Левая стена
+        this.ctx.fillRect(-wallThickness, -wallThickness, wallThickness, rows * cellSize + wallThickness * 2);
+        
+        // Правая стена
+        this.ctx.fillRect(cols * cellSize, -wallThickness, wallThickness, rows * cellSize + wallThickness * 2);
     }
 
     /**
@@ -273,9 +303,9 @@ class MazeRenderer {
     }
 
     /**
-     * Обновление и отрисовка частиц
+     * Обновление и отрисовка частиц (с учетом смещения камеры)
      */
-    updateParticles(engine) {
+    updateParticles(engine, px, py) {
         this.particleSystem = this.particleSystem.filter(p => {
             p.x += p.vx;
             p.y += p.vy;

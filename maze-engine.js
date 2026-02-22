@@ -18,6 +18,8 @@ class MazeEngine {
     }
 
     initLevel() {
+        console.log('🎮 engine.initLevel() вызвана. inputManager ID ДО инициализации:', window.inputManager?.keysId);
+        
         const baseGridSize = 7;
         const increment = (this.level - 1) * 2;
         this.cols = Math.min(101, baseGridSize + increment);
@@ -34,11 +36,20 @@ class MazeEngine {
             this.widenPaths();
         }
 
-        // --- ИСПРАВЛЕНИЕ ВЫХОДА ---
+        // --- РАСШИРЕННЫЙ ПРОХОД К ВЫХОДУ (3х3 область) ---
+        // Это гарантирует, что выход не будет в тупике
         this.grid[this.rows - 1][this.cols - 1] = 0;
-        if (this.rows > 2) this.grid[this.rows - 2][this.cols - 1] = 0;
-        if (this.cols > 2) this.grid[this.rows - 1][this.cols - 2] = 0;
-        // --------------------------
+        
+        if (this.rows > 1) this.grid[this.rows - 2][this.cols - 1] = 0;
+        if (this.cols > 1) this.grid[this.rows - 1][this.cols - 2] = 0;
+        if (this.rows > 1 && this.cols > 1) this.grid[this.rows - 2][this.cols - 2] = 0;
+        
+        // Дополнительный проход для 3х3 области
+        if (this.rows > 2) this.grid[this.rows - 3][this.cols - 1] = 0;
+        if (this.cols > 2) this.grid[this.rows - 1][this.cols - 3] = 0;
+        if (this.rows > 2 && this.cols > 1) this.grid[this.rows - 3][this.cols - 2] = 0;
+        if (this.rows > 1 && this.cols > 2) this.grid[this.rows - 2][this.cols - 3] = 0;
+        // -----------------------------------------------
 
         this.hasKey = false;
         this.hasBook = false;

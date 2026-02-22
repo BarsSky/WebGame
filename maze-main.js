@@ -67,10 +67,11 @@ function setupGame() {
     gameState.player = { x: 0, y: 0 };
     engine.visitedPath = [{ x: 0, y: 0 }];
     
-    // КРИТИЧЕСКИЙ ФИКС: Полностью очистить состояние ввода
-    inputManager.keys = {};
-    inputManager.lastMoveTime = 0;
-    physicsEngine.lastMoveTime = 0;
+    // КРИТИЧЕСКИЙ ФИКС: Переинициализировать input (это сбросит обработчики)
+    inputManager.initialize();
+    
+    // КРИТИЧЕСКИЙ ФИКС: Сброс диалога
+    storyManager.dialogActive = false;
     
     document.body.focus();  
     updateUI();
@@ -84,12 +85,26 @@ function setupGame() {
         gameState.paused = true; // StoryManager сам снимет паузу при закрытии
     }  
 
+    console.log('✅ setupGame завершена. Уровень:', engine.level, 'Input ID:', inputManager.keysId, 'Input keys:', inputManager.keys);
+    window.__setupGameTime = performance.now();
     renderer.draw(engine, gameState.player);
 }
 /**
  * Основной игровой цикл (ФИКС: check dialogActive)
  */
+let lastGameLoopLog = 0;
 function gameLoop(timestamp) {
+    // Логируем КАЖДЫЙ раз в первые 5 секунд после setupGame для отладки
+    if (timestamp - lastGameLoopLog > 500 || (window.__setupGameTime && timestamp - window.__setupGameTime < 5000)) {
+        console.log('🎮 gameLoop called:', {
+            paused: gameState.paused,
+            dialogActive: storyManager.dialogActive,
+            dir: inputManager.getMovementDirection(),
+            keys: inputManager.keys
+        });
+        lastGameLoopLog = timestamp;
+    }
+    
     if (!gameState.paused && !storyManager.dialogActive) {
         // Обновление движения
         const moveResult = physicsEngine.updateMovement(gameState.player, engine, inputManager, timestamp);
@@ -110,13 +125,20 @@ function gameLoop(timestamp) {
         // Проверка победы
         if (physicsEngine.checkWinCondition(gameState.player, engine)) {
             handleWin();
+            // КРИТИЧНО: requestAnimationFrame ДОЛЖЕН быть вызван ДО return!
+            requestAnimationFrame(gameLoop);
             return;
         }
 
-        // Отрисовка + particles
-        renderer.updateParticles(engine);
+        // Отрисовка (particles отрисовываются внутри draw)
         renderer.draw(engine, gameState.player);
         updateUI();
+    } else {
+        // Отладка: почему игра на паузе?
+        if (gameState.paused || storyManager.dialogActive) {
+            // Продолжаем рисовать, но не обновляем логику
+            renderer.draw(engine, gameState.player);
+        }
     }
 
     requestAnimationFrame(gameLoop);
@@ -136,14 +158,20 @@ function handleWin() {
 
     setTimeout(() => {
         clearWinMessage();
-        gameState.paused = false;
-
-        // ПОЛНАЯ ПЕРЕИНИЦИАЛИЗАЦИЯ ВСЕ СИСТЕМ
+        console.log('🔴 handleWin setTimeout: inputManager ID ДО инициализации:', inputManager.keysId);
+        
+        // КРИТИЧЕСКИ ВАЖНО: сбросить таймеры ПЕРВЫМИ
+        physicsEngine.lastMoveTime = 0;
+        
+        // ПОЛНАЯ ПЕРЕИНИЦИАЛИЗАЦИЯ ВСЕХ СИСТЕМ
         renderer.initialize();
         audioManager.initialize();
         physicsEngine.initialize();
-        inputManager.rebindControls();
+        console.log('🟠 После инициализации: inputManager ID:', inputManager.keysId);
+        
+        gameState.paused = false;
         setupGame();  // Restart level
+        console.log('🟡 После setupGame: inputManager ID:', inputManager.keysId);
     }, 2000);  // 2s delay
 }
 

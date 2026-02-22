@@ -119,7 +119,7 @@ class StoryManager {
 <div class="dialog-content">
 <div class="dialog-name">${name}</div>
 <div class="dialog-text">${text}</div>
-<div class="dialog-close">[Нажмите пробел для закрытия]</div>
+<div class="dialog-close">[Пробел или кликните для закрытия]</div>
 </div>
 `;
         dialogBox.style.display = 'block';
@@ -129,7 +129,12 @@ class StoryManager {
         if (window.gameState) window.gameState.paused = true;
 
         const closeDialog = (e) => {
-            if (e.key === ' ' || e.type === 'click') {
+            // Закрытие по пробелу, клику или тапу
+            const shouldClose = (e.type === 'keydown' && e.key === ' ') || 
+                               (e.type === 'click' || e.type === 'touchend');
+            
+            if (shouldClose) {
+                e.preventDefault?.();
                 dialogBox.style.display = 'none';
                 this.dialogActive = false;
                 
@@ -141,12 +146,15 @@ class StoryManager {
                 
                 window.removeEventListener('keydown', closeDialog);
                 dialogBox.removeEventListener('click', closeDialog);
+                dialogBox.removeEventListener('touchend', closeDialog);
             }
         };
 
         window.addEventListener('keydown', closeDialog);
         dialogBox.addEventListener('click', closeDialog);
+        dialogBox.addEventListener('touchend', closeDialog, { passive: false });
     }
+    
 
     /**
     * Показать историю (при переходе уровня)
@@ -158,7 +166,7 @@ class StoryManager {
 <div class="story-content">
 <h2>${title}</h2>
 <p>${text}</p>
-<div class="story-close">[Нажмите пробел]</div>
+<div class="story-close">[Нажмите пробел или кликните для продолжения]</div>
 </div>
 `;
         document.body.appendChild(storyBox);
@@ -168,7 +176,12 @@ class StoryManager {
         if (window.gameState) window.gameState.paused = true;
 
         const closeStory = (e) => {
-            if (e.key === ' ') {
+            // Закрытие по пробелу или клику/тапу
+            const shouldClose = (e.type === 'keydown' && e.key === ' ') || 
+                               (e.type === 'click' || e.type === 'touchend');
+            
+            if (shouldClose) {
+                e.preventDefault?.();
                 storyBox.remove();
                 this.dialogActive = false;
                 
@@ -179,10 +192,14 @@ class StoryManager {
                 if (window.inputManager) window.inputManager.rebindControls();
 
                 window.removeEventListener('keydown', closeStory);
+                storyBox.removeEventListener('click', closeStory);
+                storyBox.removeEventListener('touchend', closeStory);
             }
         };
 
         window.addEventListener('keydown', closeStory);
+        storyBox.addEventListener('click', closeStory);
+        storyBox.addEventListener('touchend', closeStory, { passive: false });
     }
 
     /**

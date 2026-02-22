@@ -3,34 +3,33 @@
 /**
  * Включение отладки в консоли
  */
-window.DEBUG_MODE = true;
+window.DEBUG_MODE = false; // ОТКЛЮЧЕНО - конфликт с maze-input.js!
 
 // Оригинальные обработчики событий
 const originalKeyDown = window.onkeydown;
 const originalKeyUp = window.onkeyup;
 
-// Перехватываем события клавиатуры для отладки
-if (window.DEBUG_MODE) {
-    console.log("🐛 DEBUG MODE ВКЛЮЧЕН");
-    
-    // Логирование нажатий клавиш
-    document.addEventListener('keydown', (e) => {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
-            console.log(`⌨️ KEYDOWN: ${e.key}`);
-            if (window.inputManager) {
-                console.log(`📍 Keys state:`, window.inputManager.keys);
-                const dir = window.inputManager.getMovementDirection();
-                console.log(`🎯 Direction: dx=${dir.dx}, dy=${dir.dy}`);
-            }
-        }
-    });
-    
-    document.addEventListener('keyup', (e) => {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
-            console.log(`⌨️ KEYUP: ${e.key}`);
-        }
-    });
-}
+// ОТКЛЮЧЕНО: Логирование нажатий клавиш конфликтует с maze-input.js
+// if (window.DEBUG_MODE) {
+//     console.log("🐛 DEBUG MODE ВКЛЮЧЕН");
+//     
+//     document.addEventListener('keydown', (e) => {
+//         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
+//             console.log(`⌨️ KEYDOWN: ${e.key}`);
+//             if (window.inputManager) {
+//                 console.log(`📍 Keys state:`, window.inputManager.keys);
+//                 const dir = window.inputManager.getMovementDirection();
+//                 console.log(`🎯 Direction: dx=${dir.dx}, dy=${dir.dy}`);
+//             }
+//         }
+//     });
+//     
+//     document.addEventListener('keyup', (e) => {
+//         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key)) {
+//             console.log(`⌨️ KEYUP: ${e.key}`);
+//         }
+//     });
+// }
 
 /**
  * Функция для проверки состояния управления
