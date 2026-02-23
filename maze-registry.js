@@ -8,26 +8,69 @@ const MAZE_REGISTRY = {
     'cat': {
       id: 'cat',
       name: 'Шу',
-      sprite: 'sprites/cat_sit.png',
-      preview: 'sprites/cat_preview.png',
-      stats: {speed: 1.0, vision: 'Normal'},
-      description: 'Ловкий и быстрый исследователь.'
+      stats: {speed: 1.0},
+      spriteSheets: {
+        preview: 'sprites/cat_preview.png',  // Для выбора персонажа
+        idle: 'sprites/cat_sit.png',
+        walk: 'sprites/cat_run_left.png'
+      },
+      animationConfig: {
+        frameWidth: 256,
+        frameHeight: 256,
+        states: {
+          idle: {sheet: 'idle', cols: 5, frames: 5, speed: 0, baseRow: 0},
+          walk: {
+            sheet: 'walk',
+            cols: 5,
+            frames: 5,
+            speed: 5,
+            baseRow: 0,
+            mirrorForRight: true
+          }
+        }
+      }
     },
     'dog': {
       id: 'dog',
       name: 'Сиба',
-      sprite: 'sprites/dog_sit.png',
-      preview: 'sprites/dog_preview.png',
-      stats: {speed: 0.8, vision: 'Wide'},
-      description: 'Верный защитник с острым нюхом.'
+      stats: {speed: 0.8},
+      spriteSheets: {
+        preview: 'sprites/dog_preview.png',  // Для выбора персонажа
+        idle: 'sprites/dog_sit.png',         // или dog_steady.png
+        walk: 'sprites/dog_walk.png',
+        accelerate: 'sprites/dog_acceselerate.png'
+      },
+      animationConfig: {
+        frameWidth: 256,
+        frameHeight: 256,
+        states: {
+          idle: {sheet: 'idle', cols: 5, frames: 5, speed: 1, baseRow: 0},
+          walk: {sheet: 'walk', cols: 5, frames: 5, speed: 1, baseRow: 0},
+          accelerate:
+              {sheet: 'accelerate', cols: 5, frames: 2, speed: 1, baseRow: 0}
+        }
+      }
     },
     'bird': {
       id: 'bird',
       name: 'Стриж',
-      sprite: 'sprites/bird_fly.png',
-      preview: 'sprites/bird_preview.png',
-      stats: {speed: 1.2, vision: 'Narrow'},
-      description: 'Мастер скорости, видит далеко вперед.'
+      stats: {speed: 1.2},
+      spriteSheets: {
+        preview: 'sprites/bird_preview.png',  // Для выбора персонажа
+        idle: 'sprites/bird_preview.png',
+        walk: 'sprites/bird_fly.png',
+        accelerate: 'sprites/bird_accesl.png'
+      },
+      animationConfig: {
+        frameWidth: 256,
+        frameHeight: 256,
+        states: {
+          idle: {sheet: 'idle', cols: 5, frames: 4, speed: 2, baseRow: 0},
+          walk: {sheet: 'walk', cols: 5, frames: 5, speed: 2, baseRow: 0},
+          accelerate:
+              {sheet: 'accelerate', cols: 5, frames: 5, speed: 3, baseRow: 0}
+        }
+      }
     }
   },
 
@@ -71,46 +114,38 @@ const MAZE_REGISTRY = {
       description: 'Преследует игрока, если тот подойдет слишком близко.'
     }
   },
-   roomTypes: {
-        'common': {
-            size: 3,
-            rarity: 0.7, // Вероятность генерации в тупике
-            possibleContent: ['coin', 'nothing'],
-            color: 'rgba(255, 255, 255, 0.05)'
-        },
-        'treasure': {
-            size: 3,
-            rarity: 0.2,
-            possibleContent: ['key', 'chest'],
-            color: 'rgba(251, 191, 36, 0.1)'
-        },
-        'npc_dwelling': {
-            size: 5,
-            rarity: 0.1,
-            possibleContent: ['npc'],
-            color: 'rgba(168, 85, 247, 0.1)'
-        }
+  roomTypes: {
+    'common': {
+      size: 3,
+      rarity: 0.7,  // Вероятность генерации в тупике
+      possibleContent: ['coin', 'nothing'],
+      color: 'rgba(255, 255, 255, 0.05)'
     },
-      items: {
-        'key': {
-            name: 'Ключ',
-            color: '#10b981',
-            action: 'collect_key',
-            sound: 'get'
-        },
-        'book': {
-            name: 'Книга Знаний',
-            color: '#60a5fa',
-            action: 'collect_book',
-            sound: 'get'
-        },
-        'coin': {
-            name: 'Монета',
-            color: '#fde047',
-            action: 'add_score',
-            sound: 'get'
-        }
+    'treasure': {
+      size: 3,
+      rarity: 0.2,
+      possibleContent: ['key', 'chest'],
+      color: 'rgba(251, 191, 36, 0.1)'
+    },
+    'npc_dwelling': {
+      size: 5,
+      rarity: 0.1,
+      possibleContent: ['npc'],
+      color: 'rgba(168, 85, 247, 0.1)'
     }
+  },
+  items: {
+    'key':
+        {name: 'Ключ', color: '#10b981', action: 'collect_key', sound: 'get'},
+    'book': {
+      name: 'Книга Знаний',
+      color: '#60a5fa',
+      action: 'collect_book',
+      sound: 'get'
+    },
+    'coin':
+        {name: 'Монета', color: '#fde047', action: 'add_score', sound: 'get'}
+  }
 };
 
 window.MAZE_REGISTRY = MAZE_REGISTRY;

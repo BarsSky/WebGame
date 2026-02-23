@@ -339,46 +339,81 @@ canvas {
 }
 
 .char-options {
-    display: flex;
-    gap: 20px;
-    margin: 25px 0;
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 30px 0;
 }
 
 .char-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(168, 85, 247, 0.3);
-    border-radius: 12px;
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 120px;
+  width: 160px;
+  background: rgba(255,255,255,0.06);
+  border: 3px solid rgba(168,85,247,0.4);
+  border-radius: 18px;
+  padding: 20px 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
 }
 
 .char-card:hover {
-    background: rgba(168, 85, 247, 0.2);
-    transform: translateY(-5px);
-    border-color: #a855f7;
+  transform: translateY(-12px) scale(1.05);
+  border-color: #a855f7;
+  box-shadow: 0 0 40px rgba(168,85,247,0.6);
 }
 
 .char-preview {
-    width: 64px; /* Размер одного кадра */
-    height: 64px;
-    margin: 0 auto 10px;
-    background-repeat: no-repeat;
-    image-rendering: pixelated;
-    overflow: hidden;
-    background-size: 256px 256px; /* Размер всего файла (4 кадра по 64px) */
-    animation: charIdle 0.8s steps(4) infinite; /* 4 кадра анимации */
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 15px;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  image-rendering: pixelated;
+  border: 3px solid rgba(168, 85, 247, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+  background-color: #0f172a;
+  
+  /* Анимация idle-превью (5 кадров горизонтально) */
+  animation: previewIdle 1.2s steps(4) infinite;
+}
+
+@keyframes previewIdle {
+  from { background-position-x: 0; }
+  to   { background-position-x: -400%; }   /* -100% × (кол-во кадров - 1) */
+}
+
+/* При наведении — чуть быстрее и ярче */
+.char-card:hover .char-preview {
+  animation-duration: 0.9s;
+  filter: brightness(1.15);
 }
 
 .char-name {
-    color: white;
-    font-weight: bold;
-    text-transform: uppercase;
-    font-size: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #e0f2fe;
 }
 
+.char-stats {
+  font-size: 0.85rem;
+  color: #67e8f9;
+}
 
+/* Кнопка закрытия */
+.close-char-select {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 28px;
+  cursor: pointer;
+}
 
 @keyframes charIdle {
     from { background-position-x: 0; }

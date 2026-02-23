@@ -15,71 +15,76 @@ class MazeEngine {
     this.hasBook = false;
     this.visitedPath = [];
     this.dialogState = {};
+    this.cameraZoom = 1.5;  // ← новый параметр
   }
 
   initLevel() {
-    console.log(
-        '🎮 engine.initLevel() вызвана. inputManager ID ДО инициализации:',
-        window.inputManager?.keysId);
+    console.log('🎮 engine.initLevel() для уровня', this.level);
 
-    const baseGridSize = 7;
-    const increment = (this.level - 1) * 2;
-    this.cols = Math.min(101, baseGridSize + increment);
-    this.rows = Math.min(101, baseGridSize + increment);
+    const base = 7;
+    const inc = (this.level - 1) * 2;
+    this.cols = Math.min(101, base + inc);
+    this.rows = Math.min(101, base + inc);
 
-    // Масштабирование: после 15 уровня фиксируем размер ячейки для камеры
     this.cellSize = (this.level > 15) ? 25 : (400 / this.cols);
 
     this.grid = Array(this.rows).fill().map(() => Array(this.cols).fill(1));
     this._generate(0, 0);
 
-    // ФИКС: расширение проходов на уровнях > 20
+    // Комнаты и расширения проходов
+    this.activeRooms = [];
+
     if (this.level > 20) {
-      this.addRooms();    // Добавляем комнаты в тупики
-      this.widenPaths();  // Расширяем проходы до 3 клеток
+      this.addRooms();
+      this.widenPaths();
     }
 
-    // --- РАСШИРЕННЫЙ ПРОХОД К ВЫХОДУ (3х3 область) ---
-    // Это гарантирует, что выход не будет в тупике
-    this.grid[this.rows - 1][this.cols - 1] = 0;
+    this._ensureExitArea();
 
-    if (this.rows > 1) this.grid[this.rows - 2][this.cols - 1] = 0;
-    if (this.cols > 1) this.grid[this.rows - 1][this.cols - 2] = 0;
-    if (this.rows > 1 && this.cols > 1)
-      this.grid[this.rows - 2][this.cols - 2] = 0;
-
-    // Дополнительный проход для 3х3 области
-    if (this.rows > 2) this.grid[this.rows - 3][this.cols - 1] = 0;
-    if (this.cols > 2) this.grid[this.rows - 1][this.cols - 3] = 0;
-    if (this.rows > 2 && this.cols > 1)
-      this.grid[this.rows - 3][this.cols - 2] = 0;
-    if (this.rows > 1 && this.cols > 2)
-      this.grid[this.rows - 2][this.cols - 3] = 0;
-    // -----------------------------------------------
-
+    // Сброс состояний
     this.hasKey = false;
     this.hasBook = false;
-    this.treasures = [];  // Инициализируем массив сокровищ
     this.visitedPath = [];
     this.npcPos = [];
     this.dialogState = {};
 
-    // Координаты выхода для исключения при спавне сокровищ
-    const exitPos = {x: this.cols - 1, y: this.rows - 1};
+    // === РАЗМЕЩЕНИЕ СОКРОВИЩ И NPC ===
+    this.spawnTreasures();  // ← теперь метод существует
+    if (this.level >= 25) this.spawnNPCs();
+  }
 
-    // Размещаем КЛЮЧ (исключая старт и выход)
-    const keyPos = this._getRandomEmptyCell([exitPos]);
+  spawnTreasures() {
+    this.treasures = [];
+
+    const exitPos = {x: this.cols - 1, y: this.rows - 1};
+    const startPos = {x: 0, y: 0};
+
+    // Ключ (исключаем старт и выход)
+    let exclude = [startPos, exitPos];
+    const keyPos = this._getRandomEmptyCell(exclude);
     this.treasures.push({type: 'key', pos: keyPos, collected: false});
 
+    // Книга с 10 уровня
     if (this.level >= 10) {
-      // Размещаем КНИГУ (исключая старт, выход и ключ)
-      const bookPos = this._getRandomEmptyCell([exitPos, keyPos]);
+      exclude.push(keyPos);
+      const bookPos = this._getRandomEmptyCell(exclude);
       this.treasures.push({type: 'book', pos: bookPos, collected: false});
     }
 
-    // Спавн NPC на определенных уровнях
-    if (this.level >= 25) {
-      this.spawnNPCs();
+    console.log(`✅ Сокровища размещены (уровень ${this.level}): ${
+        this.treasures.length} шт.`);
+  }
+
+  // Новый метод
+  _ensureExitArea() {
+    const ex = this.cols - 1, ey = this.rows - 1;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const x = ex + dx, y = ey + dy;
+        if (x >= 0 && x < this.cols && y >= 0 && y < this.rows) {
+          this.grid[y][x] = 0;
+        }
+      }
     }
   }
 
@@ -126,55 +131,82 @@ class MazeEngine {
    * Добавление комнат в случайные места или тупики
    */
   addRooms() {
-    const roomConfigs = Object.values(MAZE_REGISTRY.roomTypes);
+    this.activeRooms = [];
+    const roomTypes = Object.values(MAZE_REGISTRY.roomTypes);
+
+    for (let y = 3; y < this.rows - 3; y++) {
+      for (let x = 3; x < this.cols - 3; x++) {
+        if (this.grid[y][x] !== 0) continue;
+
+        // Только настоящие тупики (1–2 прохода)
+        let openSides = 0;
+        [[0, -1], [0, 1], [-1, 0], [1, 0]].forEach(([dx, dy]) => {
+          if (this.grid[y + dy][x + dx] === 0) openSides++;
+        });
+
+        if (openSides <= 2 && Math.random() < 0.18) {
+          const cfg =
+              roomTypes.find(r => Math.random() < r.rarity) || roomTypes[0];
+
+          this._createRoomWithWalls(
+              x, y, cfg.size);  // ← новая функция с стенами
+          this.activeRooms.push(
+              {x, y, type: cfg === roomTypes[0] ? 'common' : 'treasure'});
+        }
+      }
+    }
+  }
+
+  _createRoomWithWalls(centerX, centerY, size) {
+    const half = Math.floor(size / 2);
+    const entranceDir =
+        Math.floor(Math.random() * 4);  // случайная сторона для входа
+
+    for (let dy = -half; dy <= half; dy++) {
+      for (let dx = -half; dx <= half; dx++) {
+        const x = centerX + dx;
+        const y = centerY + dy;
+
+        if (x <= 0 || x >= this.cols - 1 || y <= 0 || y >= this.rows - 1)
+          continue;
+
+        // Стены по периметру
+        if (Math.abs(dx) === half || Math.abs(dy) === half) {
+          this.grid[y][x] = 1;  // стена
+        } else {
+          this.grid[y][x] = 0;  // пол
+        }
+      }
+    }
+
+    // Один вход шириной 1 клетка
+    const ex = centerX +
+        (entranceDir === 0     ? half :
+             entranceDir === 2 ? -half :
+                                 0);
+    const ey = centerY +
+        (entranceDir === 1     ? half :
+             entranceDir === 3 ? -half :
+                                 0);
+    if (ex > 0 && ex < this.cols - 1 && ey > 0 && ey < this.rows - 1) {
+      this.grid[ey][ex] = 0;
+    }
+  }
+
+  widenPaths() {
+    const prob = 0.28 + (this.level - 20) * 0.012;  // мягче чем раньше
 
     for (let y = 1; y < this.rows - 1; y++) {
       for (let x = 1; x < this.cols - 1; x++) {
-        // Если это тупик или просто пустая клетка
-        if (this.grid[y][x] === 0 && Math.random() < 0.05) {
-          const room =
-              roomConfigs.find(r => Math.random() < r.rarity) || roomConfigs[0];
-          this._createRoom(x, y, room.size);
-        }
-      }
-    }
-  }
-
-  _createRoom(centerX, centerY, size) {
-    const half = Math.floor(size / 2);
-    for (let dy = -half; dy <= half; dy++) {
-      for (let dx = -half; dx <= half; dx++) {
-        let nx = centerX + dx;
-        let ny = centerY + dy;
-        if (nx > 0 && nx < this.cols - 1 && ny > 0 && ny < this.rows - 1) {
-          this.grid[ny][nx] = 0;  // Вырезаем пространство комнаты
-        }
-      }
-    }
-  }
-
-  /**
-   * Расширение проходов (фиксированная логика из [11])
-   */
-  widenPaths() {
-    const tempGrid = JSON.parse(JSON.stringify(this.grid));
-    const expandProb = 0.4 + (this.level - 20) * 0.02;
-
-    for (let y = 0; y < this.rows; y++) {
-      for (let x = 0; x < this.cols; x++) {
         if (this.grid[y][x] === 0) {
-          // Расширяем вправо и вниз для создания эффекта ширины в 3 клетки
-          if (x + 1 < this.cols && Math.random() < expandProb)
-            tempGrid[y][x + 1] = 0;
-          if (y + 1 < this.rows && Math.random() < expandProb)
-            tempGrid[y + 1][x] = 0;
-          if (x + 1 < this.cols && y + 1 < this.rows)
-            tempGrid[y + 1][x + 1] = 0;
+          if (Math.random() < prob) this.grid[y][x + 1] = 0;
+          if (Math.random() < prob) this.grid[y + 1][x] = 0;
         }
       }
     }
-    this.grid = tempGrid;
   }
+
+
   /**
    * Получение случайной пустой клетки с исключениями
    */
@@ -226,5 +258,6 @@ class MazeEngine {
   resetProgress() {
     this.level = 1;
     localStorage.setItem('skynas_maze_level', 1);
+    localStorage.setItem('charSelectShown_22', 'false');
   }
 }

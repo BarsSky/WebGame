@@ -67,9 +67,11 @@ class MazeRenderer {
 
     // Эффект камеры после 15 уровня
     if (engine.level > 15) {
-      const camX = (this.canvas.width / dpr / 2) - px;
-      const camY = (this.canvas.height / dpr / 2) - py;
+      const zoom = engine.cameraZoom || 1.0;
+      const camX = (this.canvas.width / dpr / 2) - px * zoom;
+      const camY = (this.canvas.height / dpr / 2) - py * zoom;
       this.ctx.translate(camX, camY);
+      this.ctx.scale(zoom, zoom);  // ← зум
     }
 
     // 1. Пол
@@ -209,7 +211,8 @@ class MazeRenderer {
     if (engine.level >= 22 && window.spriteManager) {
       const dir = window.inputManager.getMovementDirection();
       window.spriteManager.updateState(dir.dx, dir.dy);
-      window.spriteManager.draw(this.ctx, px, py, engine.cellSize);
+      window.spriteManager.draw(
+          this.ctx, px, py, engine.cellSize * 1.08);  // чуть крупнее
     } else {
       this.ctx.fillStyle = '#00d2ff';
       this.ctx.shadowBlur = 10;
