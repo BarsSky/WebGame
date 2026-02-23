@@ -3,24 +3,26 @@
  * Система управления спрайтами и анимацией персонажей
  */
 class SpriteManager {
-    constructor() {
-        this.sprites = {
-            'cat': { url: 'sprites/cat_sit.png', loaded: false, img: new Image() },
-            'mage': { url: 'sprites/mage.png', loaded: false, img: new Image() },
-            'rogue': { url: 'sprites/rogue.png', loaded: false, img: new Image() }
-        };
+       constructor() {
+        this.sprites = {};
         this.selectedId = localStorage.getItem('skynas_char_id') || 'cat';
         this.frame = 0;
         this.tick = 0;
-        this.animSpeed = 8; // Частота смены кадров
-        this.frameSteps = 4; // Количество кадров в ряду спрайт-листа
-        this.isMoving = false;
-        this.currentDir = 0; // 0: Down, 1: Left, 2: Right, 3: Up
+        this.animSpeed = 8;
+        this.frameSteps = 4;
+        this.currentDir = 0;
     }
 
     initialize() {
-        for (let id in this.sprites) {
-            this.sprites[id].img.src = this.sprites[id].url;
+        // Загружаем спрайты всех игровых персонажей из реестра
+        const allChars = { ...MAZE_REGISTRY.players, ...MAZE_REGISTRY.npcs };
+        for (let id in allChars) {
+            const data = allChars[id];
+            this.sprites[id] = {
+                img: new Image(),
+                loaded: false
+            };
+            this.sprites[id].img.src = data.sprite;
             this.sprites[id].img.onload = () => { this.sprites[id].loaded = true; };
         }
     }

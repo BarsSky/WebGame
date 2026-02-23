@@ -53,18 +53,19 @@ function initGame() {
 }
 
 /**
- * Вызов меню выбора персонажа (можно вызвать из консоли или при достижении 22 уровня)
+ * Вызов меню выбора персонажа (можно вызвать из консоли или при достижении 22
+ * уровня)
  */
 function openCharacterSelect() {
-    if (engine.level < 22) {
-        console.log("Доступно только с 22 уровня!");
-        return;
-    }
-    
-    const choice = prompt("Выберите персонажа: knight, mage, rogue");
-    if (choice) {
-        spriteManager.setSprite(choice.toLowerCase());
-    }
+  if (engine.level < 22) {
+    console.log('Доступно только с 22 уровня!');
+    return;
+  }
+
+  const choice = prompt('Выберите персонажа: knight, mage, rogue');
+  if (choice) {
+    spriteManager.setSprite(choice.toLowerCase());
+  }
 }
 /**
  * Настройка нового уровня (ФИКС: rebind input + focus + ОЧИСТКА ВВОДА)
@@ -267,6 +268,14 @@ function changeLevel(newLevel) {
     console.log(`✅ Уровень изменен на: ${newLevel}`);
 
     // Перезагружаем игру с новым уровнем
+
+    if (newLevel === 22 && oldLevel < 22) {
+      // Задержка, чтобы уровень успел отрисоваться
+      setTimeout(() => {
+        openCharacterSelect();
+      }, 500);
+    }
+
     setupGame();
   } else {
     console.error('❌ Engine не инициализирован');
@@ -372,4 +381,41 @@ if (document.readyState === 'loading') {
   // DOM уже загружен, вызываем прямо
   console.log('⚠️ DOM уже загружен, инициализирую сразу');
   startGame();
+}
+
+function openCharacterSelect() {
+    if (window.engine.level < 22) return;
+    window.gameState.paused = true;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'char-select-overlay'; // Стили из [7]
+
+    // Динамическая генерация карточек из реестра
+    const charCards = Object.values(MAZE_REGISTRY.players).map(char => `
+        <div class="char-card" onclick="selectChar('${char.id}')">
+            <div class="char-preview preview-down" style="background-image: url('${char.sprite}')"></div>
+            <div class="char-name">${char.name}</div>
+            <div class="char-stats">Скорость: ${char.stats.speed}x</div>
+        </div>
+    `).join('');
+
+    overlay.innerHTML = `
+        <div class="char-select-modal">
+            <h2>ВЫБЕРИТЕ ГЕРОЯ</h2>
+            <div class="char-options">${charCards}</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    // Функция selectChar связывает выбор с SpriteManager [17]
+
+    window.selectChar = (id) => {
+        if (window.spriteManager) {
+            window.spriteManager.setSprite(id);
+        }
+        overlay.remove();
+        window.gameState.paused = false; // [16]
+        if (window.inputManager) window.inputManager.rebindControls(); // [12]
+        delete window.selectChar;
+    };
 }

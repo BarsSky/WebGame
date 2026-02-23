@@ -77,6 +77,21 @@ class MazeRenderer {
     this.ctx.fillRect(
         0, 0, engine.cols * engine.cellSize, engine.rows * engine.cellSize);
 
+    // НОВОЕ: Отрисовка пола комнат (если уровень > 20)
+    if (engine.level > 20 && engine.activeRooms) {
+      engine.activeRooms.forEach(room => {
+        const config = MAZE_REGISTRY.roomTypes[room.type];
+        if (config && config.color) {
+          this.ctx.fillStyle = config.color;
+          const half = Math.floor(config.size / 2);
+          this.ctx.fillRect(
+              (room.x - half) * engine.cellSize,
+              (room.y - half) * engine.cellSize, config.size * engine.cellSize,
+              config.size * engine.cellSize);
+        }
+      });
+    }
+
     // 2. Стены
     this.ctx.fillStyle = this.wallPattern;
     for (let y = 0; y < engine.rows; y++) {
@@ -154,22 +169,12 @@ class MazeRenderer {
    * Отрисовка сокровищ
    */
   drawTreasures(engine) {
-    for (let treasure of engine.treasures) {
-      if (!treasure.collected) {
-        let color;
-        switch (treasure.type) {
-          case 'key':
-            color = '#fbbf24';  // Желтый для ключа
-            break;
-          case 'book':
-            color = '#a855f7';  // Фиолетовый для книги
-            break;
-          default:
-            color = '#fbbf24';  // Цвет по умолчанию
-        }
-        this.drawItem(treasure.pos, color, engine);
+    engine.treasures.forEach(item => {
+      if (!item.collected) {
+        const config = MAZE_REGISTRY.items[item.type];
+        this.drawItem(item.pos, config.color, engine);
       }
-    }
+    });
   }
 
   /**
@@ -216,6 +221,23 @@ class MazeRenderer {
     }
   }
 
+  drawEnemies(engine) {
+    engine.enemies.forEach(enemy => {
+      const px = enemy.x * engine.cellSize + engine.cellSize / 2;
+      const py = enemy.y * engine.cellSize + engine.cellSize / 2;
+
+      if (window.spriteManager) {
+        window.spriteManager.draw(
+            this.ctx, px, py, engine.cellSize, enemy.type);
+      } else {
+        // Фолбэк отрисовка [9]
+        this.ctx.fillStyle = '#ef4444';
+        this.ctx.beginPath();
+        this.ctx.arc(px, py, engine.cellSize / 3, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+    });
+  }
   /**
    * Отрисовка стены вокруг границ лабиринта (уровни > 15)
    */
@@ -418,7 +440,7 @@ class MazeRenderer {
     } else {
       // Если все сокровища собраны, показываем направление к выходу
       targetPos = {x: engine.cols - 1, y: engine.rows - 1};
-      beaconColor = '#ec4899';  // Розовый для выхода
+      beaconColor = '#20e920';  // Зеленый для выхода
     }
 
     // Рассчитываем угол к цели
@@ -426,8 +448,9 @@ class MazeRenderer {
         targetPos.y * engine.cellSize - playerY,
         targetPos.x * engine.cellSize - playerX);
 
-    // Позиция маячка всегда в направлении цели (на фиксированном расстоянии от игрока)
-    const beaconDistance = 50;  // Фиксированное расстояние от игрока
+    // Позиция маячка всегда в направлении цели (на фиксированном расстоянии от
+    // игрока)
+    const beaconDistance = 30;  // Фиксированное расстояние от игрока
     const beaconX = playerX + Math.cos(angleToTarget) * beaconDistance;
     const beaconY = playerY + Math.sin(angleToTarget) * beaconDistance;
 
@@ -438,10 +461,12 @@ class MazeRenderer {
 
     // Частота мигания зависит от расстояния - чем ближе, тем чаще мигает
     // Нормализуем расстояние для получения частоты мигания (0.1 - 3.0)
-    const maxPossibleDistance = Math.sqrt(engine.cols * engine.cols + engine.rows * engine.rows);
+    const maxPossibleDistance =
+        Math.sqrt(engine.cols * engine.cols + engine.rows * engine.rows);
     const normalizedDistance = distanceToTarget / maxPossibleDistance;
-    const blinkFrequency = Math.max(0.1, 3.0 * (1 - normalizedDistance)); // От 0.1 до 3.0
-    
+    const blinkFrequency =
+        Math.max(0.1, 3.0 * (1 - normalizedDistance));  // От 0.1 до 3.0
+
     // Используем текущее время для расчета мигания
     const currentTime = Date.now();
     const blinkPhase = (currentTime * blinkFrequency) % (Math.PI * 2);
@@ -449,25 +474,18 @@ class MazeRenderer {
 
     // Рисуем светлячок с миганием
     this.ctx.save();
-    this.ctx.globalAlpha = 0.5 + 0.5 * blinkIntensity;  // Изменяем прозрачность для мигания
+    this.ctx.globalAlpha =
+        0.5 + 0.5 * blinkIntensity;  // Изменяем прозрачность для мигания
     this.ctx.fillStyle = beaconColor;
-    this.ctx.shadowBlur = 20 * (0.5 + 0.5 * blinkIntensity);  // Тень также мигает
+    this.ctx.shadowBlur =
+        20 * (0.5 + 0.5 * blinkIntensity);  // Тень также мигает
     this.ctx.shadowColor = beaconColor;
-    
+
     // Рисуем маячок как небольшой кружок
     this.ctx.beginPath();
     this.ctx.arc(beaconX, beaconY, 6, 0, Math.PI * 2);
     this.ctx.fill();
-    
-    // Добавляем стрелку, указывающую направление к цели
-    this.ctx.strokeStyle = beaconColor;
-    this.ctx.lineWidth = 2;
-    this.ctx.globalAlpha = 0.7 + 0.3 * blinkIntensity;
-    this.ctx.beginPath();
-    this.ctx.moveTo(playerX, playerY);
-    this.ctx.lineTo(beaconX, beaconY);
-    this.ctx.stroke();
-    
+
     this.ctx.restore();
   }
 
