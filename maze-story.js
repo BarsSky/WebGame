@@ -5,13 +5,49 @@
 
 const STORY_DATA = {
     level: {
+        1: {
+            title: "ВВЕДЕНИЕ",
+            text: "Вы открываете глаза и вокруг темнота..., Лишь странное свечение вокруг вас освещает пространство... Это кирпичная стена? "
+        },
+        2:{
+            title: "Вы нашли выход",
+            text: "Кажется этот путь открывает только ключ..."
+        },
+        3: {
+            title: "ВЫХОД",
+            text: "Опять выход..., но куда он ведет? "
+        },
+        4: {
+            title: "СНОВА",
+            text: "Кажется выход есть всегда..., и сколько надо еще раз...? "
+        },
+        5: {
+            title: "ПРОСТО",
+            text: "Вам еще не надоел этот лабиринт? Кажется ничего нового нет и не будет..."
+        },
+        6: {
+            title: "ПРДЫСТОРИЯ",
+            text: "Стены навевают размышления, 'Кто Я такой?' или 'Что Я такое?'... Кто пишет эти все слова?"
+        },
+        7: {
+            title: "ИСТОРИЯ: ЧАСТЬ I",
+            text: "Ответов нет... свет только от меня... и лишь кирпичные стены. С чего же начать..."
+        },
+        8: {
+            title: "ИСТОРИЯ: ЧАСТЬ II",
+            text: "Нашел себя не на помойке... Лишь серого кирпича избитый путь... И выход..."
+        },
+        9: {
+            title: "ИСТОРИЯ: ЧАСТЬ III",
+            text: "Пошлите же мне хоть что-то кроме стен о высшие вы недотроги... Культурных слов на вас нет... Хреновы вы *****..."
+        },
         10: {
             title: "ГЛАВА I: КНИГА ЗНАНИЙ",
-            text: "Вы нашли древнюю книгу, которая освещает путь сквозь тьму..."
+            text: "Вы нашли древнюю книгу, которая освещает прошедший путь сквозь тьму... Она выпала у вас из, эм рук? в проем выхода и затерялась на следующем уровне."
         },
         16: {
             title: "ГЛАВА II: ВЗОР ЯСТРЕБА",
-            text: "Ваше зрение обостряется как у ястреба..."
+            text: "Ваше зрение обостряется как у ястреба..., теперь центр это вы... визуально."
         },
         17: {
             title: "ГЛАВА II: МАЯЧОК",
@@ -105,7 +141,7 @@ class StoryManager {
 
         const dialogIndex = Math.floor(Math.random() * npc.dialogs.length);
         const dialog = npc.dialogs[dialogIndex];
-        
+
         this.showDialogBox(npc.name, dialog);
         this.unlockedStories.add(`npc_${npcIndex}`);
         this.saveProgress();
@@ -132,26 +168,26 @@ class StoryManager {
 `;
         dialogBox.style.display = 'block';
         this.dialogActive = true;
-        
+
         // Ставим игру на паузу при диалоге
         if (window.gameState) window.gameState.paused = true;
 
         const closeDialog = (e) => {
             // Закрытие по пробелу, клику или тапу
-            const shouldClose = (e.type === 'keydown' && e.key === ' ') || 
-                               (e.type === 'click' || e.type === 'touchend');
-            
+            const shouldClose = (e.type === 'keydown' && e.key === ' ') ||
+                (e.type === 'click' || e.type === 'touchend');
+
             if (shouldClose) {
                 e.preventDefault?.();
                 dialogBox.style.display = 'none';
                 this.dialogActive = false;
-                
+
                 // Снимаем игру с паузы
                 if (window.gameState) window.gameState.paused = false;
-                
+
                 // Восстанавливаем фокус и управление
                 if (window.inputManager) window.inputManager.rebindControls();
-                
+
                 window.removeEventListener('keydown', closeDialog);
                 dialogBox.removeEventListener('click', closeDialog);
                 dialogBox.removeEventListener('touchend', closeDialog);
@@ -162,7 +198,7 @@ class StoryManager {
         dialogBox.addEventListener('click', closeDialog);
         dialogBox.addEventListener('touchend', closeDialog, { passive: false });
     }
-    
+
 
     /**
     * Показать историю (при переходе уровня)
@@ -178,24 +214,24 @@ class StoryManager {
 </div>
 `;
         document.body.appendChild(storyBox);
-        
+
         this.dialogActive = true;
         // Пауза уже должна быть выставлена в setupGame, но для надежности:
         if (window.gameState) window.gameState.paused = true;
 
         const closeStory = (e) => {
             // Закрытие по пробелу или клику/тапу
-            const shouldClose = (e.type === 'keydown' && e.key === ' ') || 
-                               (e.type === 'click' || e.type === 'touchend');
-            
+            const shouldClose = (e.type === 'keydown' && e.key === ' ') ||
+                (e.type === 'click' || e.type === 'touchend');
+
             if (shouldClose) {
                 e.preventDefault?.();
                 storyBox.remove();
                 this.dialogActive = false;
-                
+
                 // ВАЖНО: Снимаем паузу, чтобы игра продолжилась
                 if (window.gameState) window.gameState.paused = false;
-                
+
                 // Восстанавливаем управление
                 if (window.inputManager) window.inputManager.rebindControls();
 
