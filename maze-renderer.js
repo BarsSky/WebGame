@@ -9,74 +9,51 @@ class MazeRenderer {
     this.ctx = this.canvas.getContext('2d');
     this.wallPattern = null;
     this.particleSystem = [];
-    this.hudHeight = 60;  // Высота области HUD [14]
+  this.hudHeight = 70;
   }
 
   initialize() {
     this.createWallPattern();
   }
 
-  /**
-   * Создание текстуры кирпича для стен
-   */
   createWallPattern() {
     this.wallPatterns = {};
+    // brick
+    const b = document.createElement('canvas'); b.width = b.height = 32;
+    const bc = b.getContext('2d');
+    bc.fillStyle = '#1e293b'; bc.fillRect(0,0,32,32);
+    bc.fillStyle = '#334155'; bc.fillRect(2,2,28,12); bc.fillRect(2,18,12,12); bc.fillRect(18,18,12,12);
+    this.wallPatterns[1] = this.ctx.createPattern(b, 'repeat');
 
-    // 1. Кирпич (уровни 1-15)
-    const brick = document.createElement('canvas');
-    brick.width = brick.height = 32;
-    const bctx = brick.getContext('2d');
-    bctx.fillStyle = '#1e293b';
-    bctx.fillRect(0, 0, 32, 32);
-    bctx.fillStyle = '#334155';
-    bctx.fillRect(2, 2, 28, 12);
-    bctx.fillRect(2, 18, 12, 12);
-    bctx.fillRect(18, 18, 12, 12);
-    this.wallPatterns[1] = this.ctx.createPattern(brick, 'repeat');
-
-    // 2. Камень (уровни 16-25)
-    const stone = document.createElement('canvas');
-    stone.width = stone.height = 32;
-    const sctx = stone.getContext('2d');
-    sctx.fillStyle = '#475569';
-    sctx.fillRect(0, 0, 32, 32);
-    sctx.fillStyle = '#334155';
-    sctx.fillRect(4, 4, 24, 8);
-    sctx.fillRect(4, 20, 12, 8);
-    this.wallPatterns[2] = this.ctx.createPattern(stone, 'repeat');
+    // stone
+    const s = document.createElement('canvas'); s.width = s.height = 32;
+    const sc = s.getContext('2d');
+    sc.fillStyle = '#475569'; sc.fillRect(0,0,32,32);
+    sc.fillStyle = '#334155'; sc.fillRect(4,4,24,8); sc.fillRect(4,20,12,8);
+    this.wallPatterns[2] = this.ctx.createPattern(s, 'repeat');
   }
 
-  /**
-   * Изменение размера холста при изменении окна
-   */
   resizeCanvas(engine) {
     const base = window.innerWidth >= 768 ? 600 : 400;
-    if (engine.level <= 15) {
-      engine.cellSize = base / engine.cols;
-    }
+    if (engine.level <= 15) engine.cellSize = base / engine.cols;
+
     const dpr = window.devicePixelRatio || 1;
-    const logicalWidth = engine.cols * engine.cellSize;
+    const w = engine.cols * engine.cellSize;
+    const h = engine.rows * engine.cellSize + this.hudHeight;
 
-    // Добавляем высоту HUD к общей логической высоте канваса
-    const logicalHeight = (engine.rows * engine.cellSize) + this.hudHeight;
-
-    this.canvas.width = logicalWidth * dpr;
-    this.canvas.height = logicalHeight * dpr;
-    this.canvas.style.width = logicalWidth + 'px';
-    this.canvas.style.height = logicalHeight + 'px';
+    this.canvas.width = w * dpr;
+    this.canvas.height = h * dpr;
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
     this.ctx.scale(dpr, dpr);
   }
 
-  /**
-   * Основная отрисовка сцены
-   */
   draw(engine, player) {
     const dpr = window.devicePixelRatio || 1;
     this.ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
 
-    // === ПЛАВНЫЙ ИЗОМЕТРИЧЕСКИЙ ПЕРЕХОД ===
     const targetIso = Math.min(1, Math.max(0, (engine.level - 15) / 20));
-    engine.isoFactor = (engine.isoFactor || 0) * 0.9 + targetIso * 0.1;
+    engine.isoFactor = (engine.isoFactor || 0) * 0.92 + targetIso * 0.08;
 
     const px = player.x * engine.cellSize + engine.cellSize / 2;
     const py = player.y * engine.cellSize + engine.cellSize / 2;
@@ -85,68 +62,65 @@ class MazeRenderer {
     this.ctx.translate(0, this.hudHeight);
 
     if (engine.level > 15) {
-      const zoom = engine.cameraZoom +
-          engine.isoFactor * 0.25;  // лёгкий зум при изометрии
+      const zoom = 1.15 + engine.isoFactor * 0.25;
       const camX = (this.canvas.width / dpr / 2) - px * zoom;
-      const camY =
-          (this.canvas.height / dpr / 2) - py * zoom + engine.isoFactor * 40;
+      const camY = (this.canvas.height / dpr / 2) - py * zoom + engine.isoFactor * 35;
       this.ctx.translate(camX, camY);
       this.ctx.scale(zoom, zoom);
     }
-    // 1. Пол
+
     this.ctx.fillStyle = '#0f172a';
-    this.ctx.fillRect(
-        0, 0, engine.cols * engine.cellSize, engine.rows * engine.cellSize);
+    this.ctx.fillRect(0, 0, engine.cols * engine.cellSize, engine.rows * engine.cellSize);
 
-    // НОВОЕ: Отрисовка пола комнат (если уровень > 20)
-    if (engine.level > 20 && engine.activeRooms) {
-      engine.activeRooms.forEach(room => {
-        const config = MAZE_REGISTRY.roomTypes[room.type];
-        if (config && config.color) {
-          this.ctx.fillStyle = config.color;
-          const half = Math.floor(config.size / 2);
-          this.ctx.fillRect(
-              (room.x - half) * engine.cellSize,
-              (room.y - half) * engine.cellSize, config.size * engine.cellSize,
-              config.size * engine.cellSize);
-        }
-      });
-    }
-
-    // 2. Стены
     this.drawWalls(engine);
-    // 3. Выход
     this.drawExit(engine);
-
-    // 4. Предметы (сокровища)
     this.drawTreasures(engine);
-
-    // 5. NPC
     this.drawNPCs(engine);
-
-    // 6. Игрок
     this.drawPlayer(px, py, engine);
 
-    // 7. Стена вокруг границ (для уровней > 15 с фиксированной камерой)
-    if (engine.level > 15) {
-      this.drawBoundaryWall(engine);
-    }
+    if (engine.level > 15) this.drawBoundaryWall(engine);
 
-    // 8. Частицы (отрисовываются ВНУТРИ transformed контекста)
     this.updateParticles(engine, px, py);
-
-    // 9. Светлячок-компас (начиная с 17 уровня)
-    if (engine.level >= 17) {
-      this.drawCompassBeacon(engine, px, py);
-    }
+    if (engine.level >= 17) this.drawCompassBeacon(engine, px, py);
 
     this.ctx.restore();
 
-    // 10. Туман войны
     this.applyFog(px, py, engine);
+    this.drawHUD(engine);
+  }
 
-    // HUD поверх canvas
-    this.drawHUD(engine, gameState);
+  drawHUD(engine) {
+    this.ctx.save();
+    this.ctx.resetTransform();
+
+    // Фон HUD
+    this.ctx.fillStyle = 'rgba(2,6,23,0.95)';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.hudHeight);
+
+    const hasKey = engine.hasKey;
+    const hasBook = engine.hasBook;
+
+    // Номер уровня
+    this.ctx.font = 'bold 28px system-ui';
+    this.ctx.fillStyle = '#00d2ff';
+    this.ctx.fillText(`LVL ${engine.level}`, 30, 48);
+
+    // Ключ и книга
+    if (hasKey) this.drawIcon(220, 42, '🔑', '#fbbf24');
+    if (hasBook) this.drawIcon(290, 42, '📖', '#a855f7');
+
+    // Нижние панели уже есть в createBottomPanels()
+
+    this.ctx.restore();
+  }
+
+  drawIcon(x, y, emoji, color) {
+    this.ctx.font = '42px system-ui';
+    this.ctx.fillStyle = color;
+    this.ctx.shadowBlur = 20;
+    this.ctx.shadowColor = color;
+    this.ctx.fillText(emoji, x, y);
+    this.ctx.shadowBlur = 0;
   }
 
   /**
@@ -164,35 +138,6 @@ class MazeRenderer {
     this.ctx.shadowBlur = 0;
   }
 
-  drawHUD(engine, gameState) {
-    this.ctx.save();
-    this.ctx.resetTransform();  // чтобы HUD был в экранных координатах
-
-    const hasKey = engine.hasKey;
-    const hasBook = engine.hasBook;
-
-    // Ключ и книга (спрайты)
-    if (hasKey) this.drawIcon(40, 40, '🔑', '#fbbf24');
-    if (hasBook) this.drawIcon(100, 40, '📖', '#a855f7');
-
-    // С 25 уровня — HP и Stamina
-    if (engine.level >= 25) {
-      this.drawBar(40, 80, 200, 18, engine.playerHP || 100, '#10b981', 'HP');
-      this.drawBar(
-          40, 110, 200, 18, engine.playerStamina || 100, '#eab308', 'STAMINA');
-    }
-
-    this.ctx.restore();
-  }
-
-  drawIcon(x, y, emoji, color) {
-    this.ctx.font = '40px system-ui';
-    this.ctx.fillStyle = color;
-    this.ctx.shadowBlur = 15;
-    this.ctx.shadowColor = color;
-    this.ctx.fillText(emoji, x, y);
-    this.ctx.shadowBlur = 0;
-  }
 
   drawBar(x, y, w, h, value, color, label) {
     this.ctx.fillStyle = '#1e293b';

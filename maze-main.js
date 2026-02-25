@@ -3,41 +3,37 @@
  * Главный файл управления игрой и основной игровой цикл
  */
 
-// Глобальное состояние игры
-let gameState = {player: {x: 0, y: 0}, paused: false};
-
-// Сразу добавляем в window
+// Глобальное состояние
+let gameState = { player: { x: 0, y: 0 }, paused: false };
 window.gameState = gameState;
 
-// Менеджеры компонентов
-let engine;
-let renderer;
-let inputManager;
-let audioManager;
-let physicsEngine;
-let storyManager;
+let engine, renderer, inputManager, audioManager, physicsEngine, storyManager, spriteManager;
 
 /**
- * Инициализация игры
+ * Запуск игры
  */
+function startGame() {
+  console.log('🎮 Запуск Maze Maze Daze...');
+  showMainMenu();   // ВСЕГДА показываем меню при перезагрузке
+}
+
 function initGame() {
-  // engine = new MazeEngine();
-  // renderer = new MazeRenderer('maze');
-  // inputManager = new InputManager();
-  // audioManager = new AudioManager();
-  // physicsEngine = new PhysicsEngine();
-  // storyManager = new StoryManager();
+  engine = new MazeEngine();
+  renderer = new MazeRenderer('maze');
+  inputManager = new InputManager();
+  audioManager = new AudioManager();
+  physicsEngine = new PhysicsEngine();
+  storyManager = new StoryManager();
 
-  // // Глобальные ссылки
-  // window.engine = engine;
-  // window.renderer = renderer;
-  // window.inputManager = inputManager;
-  // window.audioManager = audioManager;
-  // window.physicsEngine = physicsEngine;
-  // window.storyManager = storyManager;
-  // window.gameState = gameState;
+  window.engine = engine;
+  window.renderer = renderer;
+  window.inputManager = inputManager;
+  window.audioManager = audioManager;
+  window.physicsEngine = physicsEngine;
+  window.storyManager = storyManager;
+  window.gameState = gameState;
 
-  // === ВАЖНО: spriteManager создаётся ПЕРЕД setupGame ===
+  // SpriteManager ПЕРЕД setupGame!
   spriteManager = new SpriteManager();
   spriteManager.initialize();
   window.spriteManager = spriteManager;
@@ -47,121 +43,76 @@ function initGame() {
   audioManager.initialize();
   physicsEngine.initialize();
 
-  setupGame();  // теперь спрайт уже существует
+  setupGame();
   requestAnimationFrame(gameLoop);
 }
 
 /**
- * Настройка нового уровня (ФИКС: rebind input + focus + ОЧИСТКА ВВОДА)
+ * Настройка уровня
  */
 function setupGame() {
   engine.initLevel();
   renderer.resizeCanvas(engine);
 
+  // Выбор персонажа только на 22 уровне
   if (engine.level === 22 && !localStorage.getItem('charSelectShown_22')) {
     setTimeout(() => {
       openCharacterSelect();
-      localStorage.setItem('charSelectShown_22', 'true');  // один раз за игру
-    }, 1200);
+      localStorage.setItem('charSelectShown_22', 'true');
+    }, 800);
   }
 
-  // ФИКС: Очистка частиц при новом уровне
-  if (renderer.particleSystem) {
-    renderer.particleSystem = [];
-  }
+  gameState.player = { x: 0, y: 0 };
+  engine.visitedPath = [{ x: 0, y: 0 }];
 
-  gameState.player = {x: 0, y: 0};
-  engine.visitedPath = [{x: 0, y: 0}];
-
-  // КРИТИЧЕСКИЙ ФИКС: Переинициализировать input (это сбросит обработчики)
   inputManager.initialize();
-
-  // КРИТИЧЕСКИЙ ФИКС: Сброс диалога
   storyManager.dialogActive = false;
 
   document.body.focus();
   updateUI();
   clearWinMessage();
+  createBottomPanels();
 
-  // Сброс паузы перед проверкой истории
   gameState.paused = false;
 
   const storyShown = storyManager.checkLevelStory(engine.level);
-  if (storyShown) {
-    gameState.paused = true;  // StoryManager сам снимет паузу при закрытии
-  }
+  if (storyShown) gameState.paused = true;
 
-  console.log(
-      '✅ setupGame завершена. Уровень:', engine.level,
-      'Input ID:', inputManager.keysId, 'Input keys:', inputManager.keys);
-  window.__setupGameTime = performance.now();
   renderer.draw(engine, gameState.player);
-  createBottomPanels();
 }
 
 /**
- * Основной игровой цикл (ФИКС: check dialogActive)
+ * Игровой цикл
  */
-let lastGameLoopLog = 0;
 function gameLoop(timestamp) {
-  const mainMenu = document.getElementById('main-menu');
-  if (mainMenu && mainMenu.style.display !== 'none')
-    return;  // Полная остановка цикла
-
-
-  // Логируем КАЖДЫЙ раз в первые 5 секунд после setupGame для отладки
-  if (timestamp - lastGameLoopLog > 500 ||
-      (window.__setupGameTime && timestamp - window.__setupGameTime < 5000)) {
-    console.log('🎮 gameLoop called:', {
-      paused: gameState.paused,
-      dialogActive: storyManager.dialogActive,
-      dir: inputManager.getMovementDirection(),
-      keys: inputManager.keys
-    });
-    lastGameLoopLog = timestamp;
+  if (document.getElementById('main-menu').style.display !== 'none') {
+    requestAnimationFrame(gameLoop);
+    return;
   }
 
   if (!gameState.paused && !storyManager.dialogActive) {
-    // Обновление движения
-    const moveResult = physicsEngine.updateMovement(
-        gameState.player, engine, inputManager, timestamp);
+    const moveResult = physicsEngine.updateMovement(gameState.player, engine, inputManager, timestamp);
 
     if (moveResult.moved) {
       audioManager.play('step');
-      renderer.addParticles(
-          gameState.player.x * engine.cellSize,
-          gameState.player.y * engine.cellSize, '#00d2ff');
+      renderer.addParticles(gameState.player.x * engine.cellSize, gameState.player.y * engine.cellSize, '#00d2ff');
     } else if (moveResult.blocked) {
       audioManager.play('lock');
     }
 
-    // Проверка коллизий
-    const collected = physicsEngine.checkCollisions(
-        gameState.player, engine, audioManager, storyManager);
-    if (collected.length > 0) {
-      updateUI();  // Обновляем HUD сразу при сборе
-      renderer.addParticles(
-          gameState.player.x * engine.cellSize,
-          gameState.player.y * engine.cellSize, '#fbbf24');
-    }
+    const collected = physicsEngine.checkCollisions(gameState.player, engine, audioManager, storyManager);
+    if (collected.length > 0) renderer.addParticles(gameState.player.x * engine.cellSize, gameState.player.y * engine.cellSize, '#fbbf24');
 
-    // Проверка победы
     if (physicsEngine.checkWinCondition(gameState.player, engine)) {
       handleWin();
-      // КРИТИЧНО: requestAnimationFrame ДОЛЖЕН быть вызван ДО return!
       requestAnimationFrame(gameLoop);
       return;
     }
 
-    // Отрисовка (particles отрисовываются внутри draw)
     renderer.draw(engine, gameState.player);
     updateUI();
   } else {
-    // Отладка: почему игра на паузе?
-    if (gameState.paused || storyManager.dialogActive) {
-      // Продолжаем рисовать, но не обновляем логику
-      renderer.draw(engine, gameState.player);
-    }
+    renderer.draw(engine, gameState.player);
   }
 
   requestAnimationFrame(gameLoop);
@@ -447,22 +398,18 @@ function createBottomPanels() {
     document.body.appendChild(panels);
   }
 
+  const char = MAZE_REGISTRY.players[window.spriteManager?.selectedId || 'cat'];
   panels.innerHTML = `
     <div class="panel">
-      <strong>Персонаж:</strong> ${
-      MAZE_REGISTRY.players[window.spriteManager?.selectedId || 'cat']
-          .name}<br>
-      Скорость: ${
-      MAZE_REGISTRY.players[window.spriteManager?.selectedId || 'cat']
-          .stats.speed}x
+      <strong>Герой:</strong> ${char.name}<br>
+      Скорость: ${char.stats.speed}x
     </div>
     <div class="panel" id="quest-panel">
       <strong>Задание:</strong><br>
-      <span id="current-quest">Найди ключ и выход</span>
+      <span id="current-quest">Найди ключ и выход из лабиринта</span>
     </div>
   `;
 }
-
 /**
  * maze-main.js
  */

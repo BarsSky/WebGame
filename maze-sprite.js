@@ -93,40 +93,38 @@ class SpriteManager {
     return this.spriteSheets[this.selectedId]?.[this.currentState]?.config || {};
   }
 
-  draw(ctx, px, py, size) {
-    const sheets = this.spriteSheets[this.selectedId];
-    const stateData = sheets?.[this.currentState];
+draw(ctx, px, py, size) {
+  const sheets = this.spriteSheets[this.selectedId];
+  const stateData = sheets?.[this.currentState];
 
-    if (!stateData || !stateData.loaded) {
-      this._drawFallback(ctx, px, py, size);
-      return;
-    }
-
-    const img = stateData.img;
-    const cfg = stateData.config;
-    const fw = cfg.frameWidth || 256;
-    const fh = cfg.frameHeight || 256;
-
-    let sx = this.frame * fw;
-    let sy = (cfg.baseRow || 0) * fh;
-
-    ctx.save();
-    ctx.imageSmoothingEnabled = false;   // пиксель-арт
-
-    const drawX = px - size / 2;
-    const drawY = py - size / 2;
-
-    if (this.mirror) {
-      ctx.translate(drawX + size, drawY);
-      ctx.scale(-1, 1);
-      ctx.drawImage(img, sx, sy, fw, fh, 0, 0, size, size);
-    } else {
-      ctx.drawImage(img, sx, sy, fw, fh, drawX, drawY, size, size);
-    }
-
-    ctx.restore();
+  if (!stateData || !stateData.loaded) {
+    this._drawFallback(ctx, px, py, size);
+    return;
   }
 
+  const img = stateData.img;
+  const cfg = stateData.config;
+  const fw = cfg.frameWidth || 256;
+  const fh = cfg.frameHeight || 256;
+
+  const frame = this.frame % cfg.frames;
+
+  ctx.save();
+  ctx.imageSmoothingEnabled = false;
+
+  const drawX = px - size / 2;
+  const drawY = py - size / 2;
+
+  if (this.mirror) {
+    ctx.translate(drawX + size, drawY);
+    ctx.scale(-1, 1);
+    ctx.drawImage(img, frame * fw, 0, fw, fh, 0, 0, size, size);
+  } else {
+    ctx.drawImage(img, frame * fw, 0, fw, fh, drawX, drawY, size, size);
+  }
+
+  ctx.restore();
+}
 
 drawAnimatedItem(ctx, px, py, size, itemId) {
     // Получаем данные предмета из реестра
