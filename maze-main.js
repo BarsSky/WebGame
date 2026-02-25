@@ -21,35 +21,34 @@ let storyManager;
  * Инициализация игры
  */
 function initGame() {
-  engine = new MazeEngine();
-  renderer = new MazeRenderer('maze');
-  inputManager = new InputManager();
-  audioManager = new AudioManager();
-  physicsEngine = new PhysicsEngine();
-  storyManager = new StoryManager();
+  // engine = new MazeEngine();
+  // renderer = new MazeRenderer('maze');
+  // inputManager = new InputManager();
+  // audioManager = new AudioManager();
+  // physicsEngine = new PhysicsEngine();
+  // storyManager = new StoryManager();
 
-  // Сделать глобально доступными для отладки
-  window.engine = engine;
-  window.renderer = renderer;
-  window.inputManager = inputManager;
-  window.audioManager = audioManager;
-  window.physicsEngine = physicsEngine;
-  window.storyManager = storyManager;
-  window.gameState = gameState;
+  // // Глобальные ссылки
+  // window.engine = engine;
+  // window.renderer = renderer;
+  // window.inputManager = inputManager;
+  // window.audioManager = audioManager;
+  // window.physicsEngine = physicsEngine;
+  // window.storyManager = storyManager;
+  // window.gameState = gameState;
+
+  // === ВАЖНО: spriteManager создаётся ПЕРЕД setupGame ===
+  spriteManager = new SpriteManager();
+  spriteManager.initialize();
+  window.spriteManager = spriteManager;
 
   renderer.initialize();
   inputManager.initialize();
   audioManager.initialize();
   physicsEngine.initialize();
-  storyManager.initialize?.();
 
-  setupGame();
-
-  // Запуск игрового цикла
+  setupGame();  // теперь спрайт уже существует
   requestAnimationFrame(gameLoop);
-  spriteManager = new SpriteManager();
-  spriteManager.initialize();
-  window.spriteManager = spriteManager;  // Делаем доступным глобально
 }
 
 /**
@@ -62,7 +61,7 @@ function setupGame() {
   if (engine.level === 22 && !localStorage.getItem('charSelectShown_22')) {
     setTimeout(() => {
       openCharacterSelect();
-      localStorage.setItem('charSelectShown_22', 'true'); // один раз за игру
+      localStorage.setItem('charSelectShown_22', 'true');  // один раз за игру
     }, 1200);
   }
 
@@ -97,6 +96,7 @@ function setupGame() {
       'Input ID:', inputManager.keysId, 'Input keys:', inputManager.keys);
   window.__setupGameTime = performance.now();
   renderer.draw(engine, gameState.player);
+  createBottomPanels();
 }
 
 /**
@@ -104,6 +104,11 @@ function setupGame() {
  */
 let lastGameLoopLog = 0;
 function gameLoop(timestamp) {
+  const mainMenu = document.getElementById('main-menu');
+  if (mainMenu && mainMenu.style.display !== 'none')
+    return;  // Полная остановка цикла
+
+
   // Логируем КАЖДЫЙ раз в первые 5 секунд после setupGame для отладки
   if (timestamp - lastGameLoopLog > 500 ||
       (window.__setupGameTime && timestamp - window.__setupGameTime < 5000)) {
@@ -134,6 +139,7 @@ function gameLoop(timestamp) {
     const collected = physicsEngine.checkCollisions(
         gameState.player, engine, audioManager, storyManager);
     if (collected.length > 0) {
+      updateUI();  // Обновляем HUD сразу при сборе
       renderer.addParticles(
           gameState.player.x * engine.cellSize,
           gameState.player.y * engine.cellSize, '#fbbf24');
@@ -262,7 +268,9 @@ function changeLevel(newLevel) {
     // Показываем выбор персонажа ТОЛЬКО при переходе на 22 уровень
     if (newLevel === 22 && oldLevel < 22) {
       console.log('🎉 Запускаем выбор персонажа на уровне 22');
-      setTimeout(openCharacterSelect, 800);   // небольшая задержка, чтобы уровень успел отрисоваться
+      setTimeout(
+          openCharacterSelect,
+          800);  // небольшая задержка, чтобы уровень успел отрисоваться
     }
 
     setupGame();
@@ -344,23 +352,32 @@ window.addEventListener('resize', () => {
 /**
  * Запуск игры при загрузке страницы
  */
+
+
 function startGame() {
-  console.log('🎮 Инициализирую игру...');
-  try {
-    initGame();
-    console.log('✅ Игра инициализирована успешно');
-    console.log('✅ Все компоненты:', {
-      engine: !!window.engine,
-      renderer: !!window.renderer,
-      inputManager: !!window.inputManager,
-      physicsEngine: !!window.physicsEngine,
-      audioManager: !!window.audioManager,
-      storyManager: !!window.storyManager
-    });
-  } catch (e) {
-    console.error('❌ Ошибка при инициализации:', e);
-    console.error('Stack:', e.stack);
-  }
+  console.log('🎮 Запуск Maze Maze Daze...');
+
+
+   // Сначала создаем все менеджеры [12]
+    engine = new MazeEngine();
+    renderer = new MazeRenderer('maze');
+    inputManager = new InputManager();
+    audioManager = new AudioManager();
+    physicsEngine = new PhysicsEngine();
+    storyManager = new StoryManager();
+
+    // Делаем их глобальными [12]
+    window.engine = engine;
+    window.renderer = renderer;
+    window.inputManager = inputManager;
+    window.audioManager = audioManager;
+    window.physicsEngine = physicsEngine;
+    window.storyManager = storyManager;
+    window.gameState = gameState;
+
+  // ВСЕГДА показываем главное меню при перезагрузке страницы
+  // Это самое надёжное решение для разработки
+  showMainMenu();
 }
 
 // Проверяем, уже ли DOM загружен
@@ -379,15 +396,17 @@ function openCharacterSelect() {
   const overlay = document.createElement('div');
   overlay.className = 'char-select-overlay';
 
-const charCards = Object.values(MAZE_REGISTRY.players)
-  .map(char => {
-    const previewUrl = char.preview || char.spriteSheets?.preview || char.sprite;
-    
-    // Автоматический расчёт под спрайт-лист (5 кадров × 64px)
-    const frameSize = 256;           // размер одного кадра
-    const totalWidth = frameSize * 5; // 320px для 5 кадров
+  const charCards =
+      Object.values(MAZE_REGISTRY.players)
+          .map(char => {
+            const previewUrl =
+                char.preview || char.spriteSheets?.preview || char.sprite;
 
-    return `
+            // Автоматический расчёт под спрайт-лист (5 кадров × 64px)
+            const frameSize = 256;             // размер одного кадра
+            const totalWidth = frameSize * 5;  // 320px для 5 кадров
+
+            return `
       <div class="char-card" onclick="selectChar('${char.id}')">
         <div class="char-preview" 
              style="background-image: url('${previewUrl}');
@@ -397,7 +416,8 @@ const charCards = Object.values(MAZE_REGISTRY.players)
         <div class="char-stats">Скорость: ${char.stats.speed}x</div>
       </div>
     `;
-  }).join('');
+          })
+          .join('');
 
   overlay.innerHTML = `
     <div class="char-select-modal">
@@ -416,4 +436,55 @@ const charCards = Object.values(MAZE_REGISTRY.players)
     if (window.inputManager) window.inputManager.rebindControls();
     delete window.selectChar;
   };
+}
+
+function createBottomPanels() {
+  let panels = document.getElementById('bottom-panels');
+  if (!panels) {
+    panels = document.createElement('div');
+    panels.id = 'bottom-panels';
+    panels.className = 'bottom-panels';
+    document.body.appendChild(panels);
+  }
+
+  panels.innerHTML = `
+    <div class="panel">
+      <strong>Персонаж:</strong> ${
+      MAZE_REGISTRY.players[window.spriteManager?.selectedId || 'cat']
+          .name}<br>
+      Скорость: ${
+      MAZE_REGISTRY.players[window.spriteManager?.selectedId || 'cat']
+          .stats.speed}x
+    </div>
+    <div class="panel" id="quest-panel">
+      <strong>Задание:</strong><br>
+      <span id="current-quest">Найди ключ и выход</span>
+    </div>
+  `;
+}
+
+/**
+ * maze-main.js
+ */
+function backToMenu() {
+    gameState.paused = true;
+    if (confirm("Вернуться в главное меню? Прогресс уровня будет потерян.")) {
+        document.getElementById('game-container').style.display = 'none';
+        document.getElementById('main-menu').style.display = 'flex';
+        renderMenuButtons(); // Перерисовываем кнопки меню [21]
+    } else {
+        gameState.paused = false;
+    }
+}
+
+function toggleDebugPanel() {
+    const panel = document.getElementById('debug-panel');
+    const isVisible = panel.style.display === 'block';
+    panel.style.display = isVisible ? 'none' : 'block';
+    
+    // Блокируем ввод игрока, если открыта панель [12]
+    gameState.paused = !isVisible;
+    if (isVisible && window.inputManager) {
+        window.inputManager.rebindControls();
+    }
 }

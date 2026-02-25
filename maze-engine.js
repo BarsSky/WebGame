@@ -15,7 +15,10 @@ class MazeEngine {
     this.hasBook = false;
     this.visitedPath = [];
     this.dialogState = {};
-    this.cameraZoom = 1.5;  // ← новый параметр
+    this.cameraZoom = 2.0;      // ← новый параметр
+    this.wallTypeMap = {};      // {x_y: wallTypeId}
+    this.viewMode = 'topdown';  // 'topdown' | 'isometric' | 'hybrid'
+    this.isoFactor = 0;         // 0..1 — плавный переход к изометрии
   }
 
   initLevel() {
@@ -31,6 +34,8 @@ class MazeEngine {
     this.grid = Array(this.rows).fill().map(() => Array(this.cols).fill(1));
     this._generate(0, 0);
 
+    this.wallTypeMap = {};
+
     // Комнаты и расширения проходов
     this.activeRooms = [];
 
@@ -40,6 +45,21 @@ class MazeEngine {
     }
 
     this._ensureExitArea();
+
+    // Назначаем разные типы стен
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        if (this.grid[y][x] === 1) {
+          let type = 1;
+          if (this.level >= 26)
+            type = 3;
+          else if (this.level >= 16)
+            type = 2;
+
+          this.wallTypeMap[`${x}_${y}`] = type;
+        }
+      }
+    }
 
     // Сброс состояний
     this.hasKey = false;

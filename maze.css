@@ -45,7 +45,8 @@ body {
     border-radius: 8px;
     margin: 10px;
     overflow-y: auto;
-    display: none; /* По умолчанию скрыты */
+    display: none;
+    /* По умолчанию скрыты */
 }
 
 .help-panel h3,
@@ -142,10 +143,25 @@ canvas {
 }
 
 /* Позиционирование кнопок в сетке */
-.up { grid-column: 2; grid-row: 1; }
-.left { grid-column: 1; grid-row: 2; }
-.down { grid-column: 2; grid-row: 2; }
-.right { grid-column: 3; grid-row: 2; }
+.up {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.left {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.down {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.right {
+    grid-column: 3;
+    grid-row: 2;
+}
 
 .toggle-btn {
     cursor: pointer;
@@ -169,25 +185,38 @@ canvas {
 
 /* Медиа-запросы */
 @media (pointer: coarse) {
-    .controls-container { 
+    .controls-container {
         display: grid;
         margin-top: 10px;
         margin-bottom: 10px;
     }
-    canvas { 
+
+    canvas {
         max-height: 55vh;
     }
-    .mobile-only { display: inline; }
-    .desktop-only { display: none; }
-    .desktop-visible { display: none !important; }
+
+    .mobile-only {
+        display: inline;
+    }
+
+    .desktop-only {
+        display: none;
+    }
+
+    .desktop-visible {
+        display: none !important;
+    }
+
     .center-content {
         justify-content: flex-start;
         padding-top: 5px;
     }
+
     .header-info {
         margin-bottom: 3px;
         font-size: 0.8rem;
     }
+
     .panel-visible {
         display: block !important;
         position: fixed;
@@ -202,16 +231,35 @@ canvas {
 }
 
 @media (pointer: fine) {
-    canvas { max-height: 80vh; }
-    .mobile-only { display: none; }
-    .desktop-only { display: block; }
-    .desktop-visible { display: block; }
-    .center-expanded canvas { max-width: 90vw !important; }
+    canvas {
+        max-height: 80vh;
+    }
+
+    .mobile-only {
+        display: none;
+    }
+
+    .desktop-only {
+        display: block;
+    }
+
+    .desktop-visible {
+        display: block;
+    }
+
+    .center-expanded canvas {
+        max-width: 90vw !important;
+    }
 }
 
 @media (min-width: 768px) {
-    .header-info { max-width: 90vw; }
-    .side-panel { width: 250px; }
+    .header-info {
+        max-width: 90vw;
+    }
+
+    .side-panel {
+        width: 250px;
+    }
 }
 
 /* Диалоговые окна */
@@ -310,6 +358,7 @@ canvas {
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -339,89 +388,216 @@ canvas {
 }
 
 .char-options {
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin: 30px 0;
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 30px 0;
 }
 
 .char-card {
-  width: 160px;
-  background: rgba(255,255,255,0.06);
-  border: 3px solid rgba(168,85,247,0.4);
-  border-radius: 18px;
-  padding: 20px 15px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    width: 160px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 3px solid rgba(168, 85, 247, 0.4);
+    border-radius: 18px;
+    padding: 20px 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .char-card:hover {
-  transform: translateY(-12px) scale(1.05);
-  border-color: #a855f7;
-  box-shadow: 0 0 40px rgba(168,85,247,0.6);
+    transform: translateY(-12px) scale(1.05);
+    border-color: #a855f7;
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.6);
 }
 
 .char-preview {
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 15px;
-  background-repeat: no-repeat;
-  background-position: 0 0;
-  image-rendering: pixelated;
-  border: 3px solid rgba(168, 85, 247, 0.5);
-  border-radius: 16px;
-  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
-  background-color: #0f172a;
-  
-  /* Анимация idle-превью (5 кадров горизонтально) */
-  animation: previewIdle 1.2s steps(4) infinite;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 15px;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    image-rendering: pixelated;
+    border: 3px solid rgba(168, 85, 247, 0.5);
+    border-radius: 16px;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+    background-color: #0f172a;
+
+    /* Анимация idle-превью (5 кадров горизонтально) */
+    animation: previewIdle 1.2s steps(4) infinite;
 }
 
 @keyframes previewIdle {
-  from { background-position-x: 0; }
-  to   { background-position-x: -400%; }   /* -100% × (кол-во кадров - 1) */
+    from {
+        background-position-x: 0;
+    }
+
+    to {
+        background-position-x: -400%;
+    }
+
+    /* -100% × (кол-во кадров - 1) */
 }
 
 /* При наведении — чуть быстрее и ярче */
 .char-card:hover .char-preview {
-  animation-duration: 0.9s;
-  filter: brightness(1.15);
+    animation-duration: 0.9s;
+    filter: brightness(1.15);
 }
 
 .char-name {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #e0f2fe;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #e0f2fe;
 }
 
 .char-stats {
-  font-size: 0.85rem;
-  color: #67e8f9;
+    font-size: 0.85rem;
+    color: #67e8f9;
 }
 
 /* Кнопка закрытия */
 .close-char-select {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  background: none;
-  border: none;
-  color: #94a3b8;
-  font-size: 28px;
-  cursor: pointer;
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.joystick-wrapper {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.joystick-base {
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 3px solid #00d2ff;
+    border-radius: 50%;
+    position: relative;
+}
+
+.joystick-knob {
+    width: 50px;
+    height: 50px;
+    background: #00d2ff;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 20px #00d2ff;
+    transition: transform 0.05s;
 }
 
 @keyframes charIdle {
-    from { background-position-x: 0; }
-    to { background-position-x: -256px; } /* Смещение на всю ширину ряда */
+    from {
+        background-position-x: 0;
+    }
+
+    to {
+        background-position-x: -256px;
+    }
+
+    /* Смещение на всю ширину ряда */
 }
 
 /* Направления (ряды в спрайт-листе) */
-.preview-down  { background-position-y: 0; }
-.preview-left  { background-position-y: -64px; }
-.preview-right { background-position-y: -128px; }
-.preview-up    { background-position-y: -192px; }
+.preview-down {
+    background-position-y: 0;
+}
+
+.preview-left {
+    background-position-y: -64px;
+}
+
+.preview-right {
+    background-position-y: -128px;
+}
+
+.preview-up {
+    background-position-y: -192px;
+}
+
+.bottom-panels {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 110px;
+    background: linear-gradient(to top, #020617, rgba(2, 6, 23, 0.98));
+    border-top: 3px solid #00d2ff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 200;
+    padding: 0 20px;
+    gap: 20px;
+}
+
+.panel {
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid rgba(0, 210, 255, 0.4);
+    border-radius: 14px;
+    padding: 12px 20px;
+    width: 280px;
+    height: 78px;
+    color: white;
+}
+
+/* maze.css */
+.header-controls {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.menu-btn,
+.debug-btn {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid #334155;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.menu-btn:hover {
+    background: #ef4444;
+}
+
+.debug-btn:hover {
+    background: #a855f7;
+}
+
+#debug-panel {
+    background: #1e293b;
+    border-left: 2px solid #a855f7;
+    height: 100vh;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 2000;
+    padding: 20px;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.canvas-wrapper {
+    margin-top: 60px;
+    /* Создает отступ сверху для области HUD */
+    position: relative;
+}

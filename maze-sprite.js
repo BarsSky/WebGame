@@ -104,8 +104,8 @@ class SpriteManager {
 
     const img = stateData.img;
     const cfg = stateData.config;
-    const fw = cfg.frameWidth || 64;
-    const fh = cfg.frameHeight || 64;
+    const fw = cfg.frameWidth || 256;
+    const fh = cfg.frameHeight || 256;
 
     let sx = this.frame * fw;
     let sy = (cfg.baseRow || 0) * fh;
@@ -124,6 +124,55 @@ class SpriteManager {
       ctx.drawImage(img, sx, sy, fw, fh, drawX, drawY, size, size);
     }
 
+    ctx.restore();
+  }
+
+
+drawAnimatedItem(ctx, px, py, size, itemId) {
+    // Получаем данные предмета из реестра
+    const itemConfig = MAZE_REGISTRY.items[itemId];
+    if (!itemConfig) {
+        this._drawFallbackItem(ctx, px, py, size, '#fbbf24');
+        return;
+    }
+
+    const data = this.sprites[itemId] || this.spriteSheets[itemId];
+    if (!data || !data.loaded) {
+        this._drawFallbackItem(ctx, px, py, size, itemConfig.color);
+        return;
+    }
+
+    const img = data.img;
+    const totalFrames = itemConfig.frames || 25; // Берем из реестра или 25 по умолчанию
+    const fw = img.width / totalFrames;
+    const fh = img.height;
+    
+    // Плавная анимация на основе времени
+    const animSpeed = itemConfig.animSpeed || 1;
+    const frame = Math.floor(Date.now() / (1000 / (animSpeed * 10))) % totalFrames;
+
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = itemConfig.color;
+    ctx.drawImage(
+        img,
+        frame * fw, 0, fw, fh,
+        px - size / 2, py - size / 2,
+        size, size
+    );
+    ctx.restore();
+}
+
+  _drawFallbackItem(ctx, px, py, size, color) {
+    ctx.save();
+    ctx.fillStyle = color || '#fbbf24';
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = color || '#fbbf24';
+    const pulse = Math.sin(Date.now() / 150) * 3;
+    ctx.beginPath();
+    ctx.arc(px, py + pulse, size * 0.38, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
