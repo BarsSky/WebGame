@@ -63,10 +63,22 @@ function setupGame() {
   }
 
   gameState.player = { x: 0, y: 0 };
-  engine.visitedPath = [{ x: 0, y: 0 }];
+  // При первом запуске игры или сбросе, путь начинается с (0,0), но запись начинается только после получения книги
+  // Если запись пути уже началась (после получения книги), инициализируем путь точкой старта
+  if (engine.pathRecordingStarted && engine.visitedPath.length === 0) {
+    engine.visitedPath = [{ x: 0, y: 0 }];
+  }
+  // Если запись пути еще не началась, оставляем путь пустым
 
   inputManager.initialize();
-  storyManager.dialogActive = false;
+  
+  // Добавим проверку на существование storyManager
+  if (storyManager) {
+    storyManager.dialogActive = false;
+  } else {
+    console.error("❌ storyManager не инициализирован!");
+    return;
+  }
 
   document.body.focus();
   updateUI();
@@ -75,8 +87,11 @@ function setupGame() {
 
   gameState.paused = false;
 
-  const storyShown = storyManager.checkLevelStory(engine.level);
-  if (storyShown) gameState.paused = true;
+  // Проверим, инициализирован ли storyManager перед вызовом
+  if (storyManager) {
+    const storyShown = storyManager.checkLevelStory(engine.level);
+    if (storyShown) gameState.paused = true;
+  }
 
   renderer.draw(engine, gameState.player);
 }
@@ -251,6 +266,12 @@ function selectLevel() {
 function resetGame() {
   if (confirm('Вы уверены? Это обнулит ваш прогресс!')) {
     engine.resetProgress();
+    // Добавим сброс истории
+    localStorage.removeItem('skynas_stories');
+    if (storyManager) {
+        storyManager.unlockedStories.clear();
+        storyManager.loadProgress(); // Перезагрузим состояние после очистки
+    }
     setupGame();
   }
 }

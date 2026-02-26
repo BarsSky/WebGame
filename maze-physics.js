@@ -63,10 +63,38 @@ class PhysicsEngine {
    * Запись посещенных клеток
    */
   recordVisitedPath(player, engine) {
+    // Проверяем, была ли уже посещена эта клетка
     const alreadyVisited =
         engine.visitedPath.some(p => p.x === player.x && p.y === player.y);
     if (!alreadyVisited) {
       engine.visitedPath.push({x: player.x, y: player.y});
+    }
+
+    // Если книга получена ИЛИ запись пути уже началась, записываем также соседние клетки в радиусе
+    if (engine.hasBook || engine.pathRecordingStarted) {
+      const visionRadius = Math.max(1, Math.floor(engine.level / 5)); // Радиус зависит от уровня
+      for (let dy = -visionRadius; dy <= visionRadius; dy++) {
+        for (let dx = -visionRadius; dx <= visionRadius; dx++) {
+          const nx = player.x + dx;
+          const ny = player.y + dy;
+          
+          // Проверяем, находится ли клетка в пределах лабиринта
+          if (nx >= 0 && nx < engine.cols && ny >= 0 && ny < engine.rows) {
+            const distanceSquared = dx * dx + dy * dy;
+            if (distanceSquared <= visionRadius * visionRadius) { // Круговой радиус
+              const existingIndex = engine.visitedPath.findIndex(p => p.x === nx && p.y === ny);
+              if (existingIndex === -1) {
+                engine.visitedPath.push({x: nx, y: ny});
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Если книга только что получена впервые, устанавливаем флаг начала записи
+    if (engine.hasBook && !engine.pathRecordingStarted) {
+      engine.pathRecordingStarted = true;
     }
   }
 

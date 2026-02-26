@@ -25,9 +25,16 @@ function renderMenuButtons() {
 function startNewGame() {
   localStorage.removeItem('skynas_maze_level');
   localStorage.removeItem('skynas_save');
+  // Добавим удаление истории
+  localStorage.removeItem('skynas_stories');
 
   if (window.engine) {
     window.engine.level = 1;  // Теперь engine точно определен
+    // Опционально: сбросить состояние storyManager, если оно существует
+    if (window.storyManager) {
+      window.storyManager.unlockedStories.clear();
+      window.storyManager.loadProgress(); // Перезагрузим, чтобы убедиться, что оно пустое
+    }
     hideMainMenu();
     initGame();  // Инициализация параметров уровня и старт цикла [21]
   } else {

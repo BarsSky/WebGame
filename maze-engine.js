@@ -22,6 +22,8 @@ class MazeEngine {
     this.hasBook = false;
     this.visitedPath = [];
     this.cameraZoom = 2.0;
+    // Флаг, указывающий, началась ли запись пути после получения книги
+    this.pathRecordingStarted = false;
   }
 
   initLevel() {
@@ -36,9 +38,23 @@ class MazeEngine {
 
     this.cellSize = (this.level > 15) ? 25 : (400 / this.cols);
 
+    // Сохраняем предыдущее состояние книги и пути
+    const hadBook = this.hasBook;
+    const previousPath = [...this.visitedPath]; // Сохраняем копию пути
+
+    // Сбрасываем статусы предметов
     this.hasKey = false;
     this.hasBook = false;
-    this.visitedPath = [];
+
+    // Восстанавливаем путь только если книга была получена ранее
+    if (hadBook) {
+        this.visitedPath = previousPath;
+        this.pathRecordingStarted = true;
+    } else {
+        // Если книга не была получена ранее, путь не сохраняем
+        this.visitedPath = [];
+        this.pathRecordingStarted = false;
+    }
 
     this.entityManager.spawnAll(this, this.mapEngine);
     
