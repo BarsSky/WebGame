@@ -48,12 +48,13 @@ class RenderCore {
     if (level >= 15) {
       const zoom = 1.15 + this.isoFactor * 0.25;
       const camX = (this.canvas.width / dpr / 2) - px * zoom;
-      const camY = (this.canvas.height / dpr / 2) - py * zoom + this.isoFactor * 35;
+      // Исправленный расчет camY: вычитаем половину HUD высоты
+      const camY = (this.canvas.height / dpr / 2 - this.hudHeight / 2) - py * zoom + this.isoFactor * 35;
       
       // Псевдоизометрическая трансформация (стиль Hades)
       if (level >= 25) {
           // Наклон и поворот для 2.5D эффекта
-          // this.ctx.transform(1, 0.5 * this.isoFactor, 0, 1, 0, 0); 
+          // this.ctx.transform(1, 0.5 * this.isoFactor, 0, 1, 0, 0);
       }
 
       this.ctx.translate(camX, camY);

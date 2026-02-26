@@ -268,6 +268,9 @@ function resetGame() {
     engine.resetProgress();
     // Добавим сброс истории
     localStorage.removeItem('skynas_stories');
+    // Добавим сброс диалога выбора персонажа
+    localStorage.removeItem('charSelectShown_22');
+
     if (storyManager) {
         storyManager.unlockedStories.clear();
         storyManager.loadProgress(); // Перезагрузим состояние после очистки

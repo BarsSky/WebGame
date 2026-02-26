@@ -27,6 +27,8 @@ function startNewGame() {
   localStorage.removeItem('skynas_save');
   // Добавим удаление истории
   localStorage.removeItem('skynas_stories');
+  // Добавим удаление флага выбора персонажа
+  localStorage.removeItem('charSelectShown_22');
 
   if (window.engine) {
     window.engine.level = 1;  // Теперь engine точно определен

@@ -36,7 +36,7 @@ class MazeEngine {
     this.wallTypeMap = mapData.wallTypeMap;
     this.activeRooms = mapData.activeRooms;
 
-    this.cellSize = (this.level > 15) ? 25 : (400 / this.cols);
+    this.cellSize = (this.level >= 15) ? 25 : (400 / this.cols);
 
     // Сохраняем предыдущее состояние книги и пути
     const hadBook = this.hasBook;

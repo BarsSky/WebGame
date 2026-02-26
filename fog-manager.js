@@ -11,7 +11,7 @@ class FogOfWarManager {
   apply(ctx, canvas, px, py, engine, level) {
     const dpr = window.devicePixelRatio || 1;
     let radius = Math.max(engine.cellSize * 2.5, engine.cellSize * (7 - level * 0.3));
-    if (level > 15) {
+    if (level >= 15) {
       radius = Math.max(engine.cellSize * 2.5, engine.cellSize * (7 - 15 * 0.3));
     }
 
@@ -32,7 +32,7 @@ class FogOfWarManager {
     tCtx.save();
     tCtx.translate(0, this.hudHeight);
 
-    if (level > 15) {
+    if (level >= 15) {
       tCtx.translate((canvas.width / dpr / 2) - px, (canvas.height / dpr / 2) - py);
     }
 
@@ -62,13 +62,13 @@ class FogOfWarManager {
     ctx.save();
     ctx.translate(0, this.hudHeight);
     
-    if (level > 15) {
+    if (level >= 15) {
       ctx.translate((canvas.width / dpr / 2) - px, (canvas.height / dpr / 2) - py);
       radius = radius * (engine.cameraZoom || 2.0);
     }
 
-    const gradCenterX = level > 15 ? (canvas.width / dpr / 2) : px;
-    const gradCenterY = level > 15 ? (canvas.height / dpr / 2) : py;
+    const gradCenterX = level >= 15 ? (canvas.width / dpr / 2) : px;
+    const gradCenterY = level >= 15 ? (canvas.height / dpr / 2) : py;
     const gradient = ctx.createRadialGradient(
       gradCenterX, gradCenterY + this.hudHeight, engine.cellSize / 2,
       gradCenterX, gradCenterY + this.hudHeight, radius

@@ -47,7 +47,7 @@ class MazeRenderer {
     engine.entityManager.drawAll(this.renderCore.ctx, engine, this.renderCore.isoFactor);
     this.playerRenderer.draw(this.renderCore.ctx, px, py, engine.cellSize);
 
-    if (engine.level > 15) this.drawBoundaryWall(engine);
+    if (engine.level >= 15) this.drawBoundaryWall(engine);
 
     this.updateParticles(engine, px, py);
     if (engine.level >= 17) this.drawCompassBeacon(engine, px, py);
@@ -295,7 +295,7 @@ class MazeRenderer {
     });
   }
   /**
-   * Отрисовка стены вокруг границ лабиринта (уровни > 15)
+   * Отрисовка стены вокруг границ лабиринта (уровни >= 15)
    */
   drawBoundaryWall(engine) {
     const ctx = this.renderCore.ctx;
@@ -330,7 +330,7 @@ class MazeRenderer {
     const dpr = window.devicePixelRatio || 1;
     let radius = Math.max(
         engine.cellSize * 2.5, engine.cellSize * (7 - engine.level * 0.3));
-    if (engine.level > 15) {
+    if (engine.level >= 15) {
       radius =
           Math.max(engine.cellSize * 2.5, engine.cellSize * (7 - 15 * 0.3));
     }
@@ -357,7 +357,7 @@ class MazeRenderer {
     tCtx.save();
     tCtx.translate(0, this.hudHeight || 60);
 
-    if (engine.level > 15) {
+    if (engine.level >= 15) {
       tCtx.translate(
           (this.canvas.width / dpr / 2) - px,
           (this.canvas.height / dpr / 2) - py);
@@ -399,15 +399,15 @@ class MazeRenderer {
 
     ctx.save();
     ctx.translate(0, this.renderCore.hudHeight);
-    if (engine.level > 15) {
+    if (engine.level >= 15) {
       ctx.translate(
           (this.renderCore.canvas.width / dpr / 2) - px,
           (this.renderCore.canvas.height / dpr / 2) - py);
       radius = radius * engine.cameraZoom;  // увеличиваем радиус при зуме
     }
 
-    const gradCenterX = engine.level > 15 ? (this.renderCore.canvas.width / dpr / 2) : px;
-    const gradCenterY = engine.level > 15 ? (this.renderCore.canvas.height / dpr / 2) : py;
+    const gradCenterX = engine.level >= 15 ? (this.renderCore.canvas.width / dpr / 2) : px;
+    const gradCenterY = engine.level >= 15 ? (this.renderCore.canvas.height / dpr / 2) : py;
     const gradient = ctx.createRadialGradient(
         gradCenterX, gradCenterY + this.renderCore.hudHeight, engine.cellSize / 2,
         gradCenterX, gradCenterY + this.renderCore.hudHeight, radius);
