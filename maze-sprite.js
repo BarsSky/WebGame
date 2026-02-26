@@ -94,36 +94,37 @@ class SpriteManager {
   }
 
 draw(ctx, px, py, size) {
-  const sheets = this.spriteSheets[this.selectedId];
-  const stateData = sheets?.[this.currentState];
+ const sheets = this.spriteSheets[this.selectedId];
+ const stateData = sheets?.[this.currentState];
 
-  if (!stateData || !stateData.loaded) {
-    this._drawFallback(ctx, px, py, size);
-    return;
-  }
+ if (!stateData || !stateData.loaded) {
+   // this._drawFallback(ctx, px, py, size); // <-- Не рисуем fallback здесь
+   return false; // <-- Сообщаем, что спрайт не отрисован
+ }
 
-  const img = stateData.img;
-  const cfg = stateData.config;
-  const fw = cfg.frameWidth || 256;
-  const fh = cfg.frameHeight || 256;
+ const img = stateData.img;
+ const cfg = stateData.config;
+ const fw = cfg.frameWidth || 256;
+ const fh = cfg.frameHeight || 256;
 
-  const frame = this.frame % cfg.frames;
+ const frame = this.frame % cfg.frames;
 
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
+ ctx.save();
+ ctx.imageSmoothingEnabled = false;
 
-  const drawX = px - size / 2;
-  const drawY = py - size / 2;
+ const drawX = px - size / 2;
+ const drawY = py - size / 2;
 
-  if (this.mirror) {
-    ctx.translate(drawX + size, drawY);
-    ctx.scale(-1, 1);
-    ctx.drawImage(img, frame * fw, 0, fw, fh, 0, 0, size, size);
-  } else {
-    ctx.drawImage(img, frame * fw, 0, fw, fh, drawX, drawY, size, size);
-  }
+ if (this.mirror) {
+   ctx.translate(drawX + size, drawY);
+   ctx.scale(-1, 1);
+   ctx.drawImage(img, frame * fw, 0, fw, fh, 0, 0, size, size);
+ } else {
+   ctx.drawImage(img, frame * fw, 0, fw, fh, drawX, drawY, size, size);
+ }
 
-  ctx.restore();
+ ctx.restore();
+ return true; // <-- Сообщаем, что спрайт отрисован
 }
 
 drawAnimatedItem(ctx, px, py, size, itemId) {

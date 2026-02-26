@@ -54,7 +54,7 @@ class RenderCore {
       // Псевдоизометрическая трансформация (стиль Hades)
       if (level >= 25) {
           // Наклон и поворот для 2.5D эффекта
-          // this.ctx.transform(1, 0.5 * this.isoFactor, 0, 1, 0, 0);
+          this.ctx.transform(1, 0.5 * this.isoFactor, 0, 1, 0, 0);
       }
 
       this.ctx.translate(camX, camY);

@@ -4,7 +4,11 @@
  */
 
 class PlayerRenderer {
-  draw(ctx, px, py, cellSize) {
+  draw(ctx, px, py, cellSize, level) {
+    if(level < 22){
+      this.drawFallback(ctx, px, py, cellSize);
+      return;
+    }
     if (window.spriteManager) {
       const dir = window.inputManager.getMovementDirection();
       window.spriteManager.updateState(dir.dx, dir.dy);
