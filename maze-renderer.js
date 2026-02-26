@@ -5,11 +5,12 @@
 
 class MazeRenderer {
   constructor(canvasId) {
-    this.canvas = document.getElementById(canvasId);
-    this.ctx = this.canvas.getContext('2d');
-    this.wallPattern = null;
+    this.renderCore = new RenderCore(canvasId);
+    this.fogManager = new FogOfWarManager(this.renderCore.hudHeight);
+    this.playerRenderer = new PlayerRenderer();
+    
+    this.wallPatterns = {};
     this.particleSystem = [];
-  this.hudHeight = 70;
   }
 
   initialize() {
@@ -17,93 +18,62 @@ class MazeRenderer {
   }
 
   createWallPattern() {
-    this.wallPatterns = {};
-    // brick
     const b = document.createElement('canvas'); b.width = b.height = 32;
     const bc = b.getContext('2d');
     bc.fillStyle = '#1e293b'; bc.fillRect(0,0,32,32);
     bc.fillStyle = '#334155'; bc.fillRect(2,2,28,12); bc.fillRect(2,18,12,12); bc.fillRect(18,18,12,12);
-    this.wallPatterns[1] = this.ctx.createPattern(b, 'repeat');
+    this.wallPatterns[1] = this.renderCore.ctx.createPattern(b, 'repeat');
 
-    // stone
     const s = document.createElement('canvas'); s.width = s.height = 32;
     const sc = s.getContext('2d');
     sc.fillStyle = '#475569'; sc.fillRect(0,0,32,32);
     sc.fillStyle = '#334155'; sc.fillRect(4,4,24,8); sc.fillRect(4,20,12,8);
-    this.wallPatterns[2] = this.ctx.createPattern(s, 'repeat');
+    this.wallPatterns[2] = this.renderCore.ctx.createPattern(s, 'repeat');
   }
 
   resizeCanvas(engine) {
-    const base = window.innerWidth >= 768 ? 600 : 400;
-    if (engine.level <= 15) engine.cellSize = base / engine.cols;
-
-    const dpr = window.devicePixelRatio || 1;
-    const w = engine.cols * engine.cellSize;
-    const h = engine.rows * engine.cellSize + this.hudHeight;
-
-    this.canvas.width = w * dpr;
-    this.canvas.height = h * dpr;
-    this.canvas.style.width = w + 'px';
-    this.canvas.style.height = h + 'px';
-    this.ctx.scale(dpr, dpr);
+    engine.cellSize = this.renderCore.resize(engine.cols, engine.rows, engine.cellSize, engine.level);
   }
 
   draw(engine, player) {
-    const dpr = window.devicePixelRatio || 1;
-    this.ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+    this.renderCore.clear();
+    const { px, py } = this.renderCore.setupCamera(player, engine, engine.level);
 
-    const targetIso = Math.min(1, Math.max(0, (engine.level - 15) / 20));
-    engine.isoFactor = (engine.isoFactor || 0) * 0.92 + targetIso * 0.08;
-
-    const px = player.x * engine.cellSize + engine.cellSize / 2;
-    const py = player.y * engine.cellSize + engine.cellSize / 2;
-
-    this.ctx.save();
-    this.ctx.translate(0, this.hudHeight);
-
-    if (engine.level > 15) {
-      const zoom = 1.15 + engine.isoFactor * 0.25;
-      const camX = (this.canvas.width / dpr / 2) - px * zoom;
-      const camY = (this.canvas.height / dpr / 2) - py * zoom + engine.isoFactor * 35;
-      this.ctx.translate(camX, camY);
-      this.ctx.scale(zoom, zoom);
-    }
-
-    this.ctx.fillStyle = '#0f172a';
-    this.ctx.fillRect(0, 0, engine.cols * engine.cellSize, engine.rows * engine.cellSize);
+    this.renderCore.drawBackground(engine.cols, engine.rows, engine.cellSize);
 
     this.drawWalls(engine);
     this.drawExit(engine);
-    this.drawTreasures(engine);
-    this.drawNPCs(engine);
-    this.drawPlayer(px, py, engine);
+    
+    engine.entityManager.drawAll(this.renderCore.ctx, engine, this.renderCore.isoFactor);
+    this.playerRenderer.draw(this.renderCore.ctx, px, py, engine.cellSize);
 
     if (engine.level > 15) this.drawBoundaryWall(engine);
 
     this.updateParticles(engine, px, py);
     if (engine.level >= 17) this.drawCompassBeacon(engine, px, py);
 
-    this.ctx.restore();
+    this.renderCore.restore();
 
-    this.applyFog(px, py, engine);
+    this.fogManager.apply(this.renderCore.ctx, this.renderCore.canvas, px, py, engine, engine.level);
     this.drawHUD(engine);
   }
 
   drawHUD(engine) {
-    this.ctx.save();
-    this.ctx.resetTransform();
+    const ctx = this.renderCore.ctx;
+    ctx.save();
+    ctx.resetTransform();
 
     // Фон HUD
-    this.ctx.fillStyle = 'rgba(2,6,23,0.95)';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.hudHeight);
+    ctx.fillStyle = 'rgba(2,6,23,0.95)';
+    ctx.fillRect(0, 0, this.renderCore.canvas.width, this.renderCore.hudHeight);
 
     const hasKey = engine.hasKey;
     const hasBook = engine.hasBook;
 
     // Номер уровня
-    this.ctx.font = 'bold 28px system-ui';
-    this.ctx.fillStyle = '#00d2ff';
-    this.ctx.fillText(`LVL ${engine.level}`, 30, 48);
+    ctx.font = 'bold 28px system-ui';
+    ctx.fillStyle = '#00d2ff';
+    ctx.fillText(`LVL ${engine.level}`, 30, 48);
 
     // Ключ и книга
     if (hasKey) this.drawIcon(220, 42, '🔑', '#fbbf24');
@@ -111,46 +81,76 @@ class MazeRenderer {
 
     // Нижние панели уже есть в createBottomPanels()
 
-    this.ctx.restore();
+    ctx.restore();
   }
 
   drawIcon(x, y, emoji, color) {
-    this.ctx.font = '42px system-ui';
-    this.ctx.fillStyle = color;
-    this.ctx.shadowBlur = 20;
-    this.ctx.shadowColor = color;
-    this.ctx.fillText(emoji, x, y);
-    this.ctx.shadowBlur = 0;
+    const ctx = this.renderCore.ctx;
+    ctx.font = '42px system-ui';
+    ctx.fillStyle = color;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = color;
+    ctx.fillText(emoji, x, y);
+    ctx.shadowBlur = 0;
   }
 
   /**
    * Отрисовка выхода
    */
   drawExit(engine) {
+    const ctx = this.renderCore.ctx;
     const exitSize = engine.cellSize * 0.6;
     const offset = (engine.cellSize - exitSize) / 2;
-    this.ctx.fillStyle = engine.hasKey ? '#10b981' : '#475569';
-    this.ctx.shadowBlur = engine.hasKey ? 15 : 0;
-    this.ctx.shadowColor = '#10b981';
-    this.ctx.fillRect(
+    ctx.fillStyle = engine.hasKey ? '#10b981' : '#475569';
+    ctx.shadowBlur = engine.hasKey ? 15 : 0;
+    ctx.shadowColor = '#10b981';
+    ctx.fillRect(
         (engine.cols - 1) * engine.cellSize + offset,
         (engine.rows - 1) * engine.cellSize + offset, exitSize, exitSize);
-    this.ctx.shadowBlur = 0;
+    ctx.shadowBlur = 0;
   }
 
 
   drawBar(x, y, w, h, value, color, label) {
-    this.ctx.fillStyle = '#1e293b';
-    this.ctx.fillRect(x, y, w, h);
-    this.ctx.fillStyle = color;
-    this.ctx.fillRect(x, y, w * (value / 100), h);
-    this.ctx.font = '14px system-ui';
-    this.ctx.fillStyle = '#fff';
-    this.ctx.fillText(label, x + 8, y + 14);
+    const ctx = this.renderCore.ctx;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w * (value / 100), h);
+    ctx.font = '14px system-ui';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(label, x + 8, y + 14);
   }
 
   // === НОВАЯ ОТРИСОВКА СТЕН ===
   drawWalls(engine) {
+    const ctx = this.renderCore.ctx;
+    const isoFactor = this.renderCore.isoFactor;
+
+    // 1. Сначала рисуем лицевые грани и тени для всех стен (Z-order)
+    if (engine.level >= 25) {
+      for (let y = 0; y < engine.rows; y++) {
+        for (let x = 0; x < engine.cols; x++) {
+          if (engine.grid[y][x] !== 1) continue;
+          
+          const typeId = engine.wallTypeMap[`${x}_${y}`] || 1;
+          const cfg = MAZE_REGISTRY.wallTypes[typeId];
+          
+          let sx = x * engine.cellSize + (cfg.isoOffset?.x || 0) * isoFactor;
+          let sy = y * engine.cellSize + (cfg.isoOffset?.y || 0) * isoFactor;
+
+          // Тень под стеной
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          ctx.fillRect(sx, sy + engine.cellSize, engine.cellSize, engine.cellSize * 0.4 * isoFactor);
+          
+          // Лицевая грань (объем)
+          ctx.fillStyle = cfg.color || '#334155';
+          ctx.fillRect(sx, sy + engine.cellSize * 0.1, engine.cellSize, engine.cellSize * 0.9);
+        }
+      }
+    }
+
+    // 2. Затем рисуем "крыши" стен поверх граней
     for (let y = 0; y < engine.rows; y++) {
       for (let x = 0; x < engine.cols; x++) {
         if (engine.grid[y][x] !== 1) continue;
@@ -158,23 +158,16 @@ class MazeRenderer {
         const typeId = engine.wallTypeMap[`${x}_${y}`] || 1;
         const cfg = MAZE_REGISTRY.wallTypes[typeId];
 
-        let sx = x * engine.cellSize;
-        let sy = y * engine.cellSize;
-
-        // изометрический сдвиг
-        sx += (cfg.isoOffset?.x || 0) * engine.isoFactor;
-        sy += (cfg.isoOffset?.y || 0) * engine.isoFactor;
+        let sx = x * engine.cellSize + (cfg.isoOffset?.x || 0) * isoFactor;
+        let sy = y * engine.cellSize + (cfg.isoOffset?.y || 0) * isoFactor;
 
         if (cfg.sprite) {
-          // TODO: добавить спрайт-отрисовку стен (можно потом)
-          this.ctx.fillStyle = cfg.color || '#475569';
+          ctx.fillStyle = cfg.color || '#475569';
         } else {
-          this.ctx.fillStyle = this.wallPatterns[typeId] || this.wallPattern;
+          ctx.fillStyle = this.wallPatterns[typeId] || this.wallPattern;
         }
 
-        this.ctx.fillRect(
-            sx, sy, engine.cellSize + 1,
-            engine.cellSize + 1);  // +1 убирает щели
+        ctx.fillRect(sx, sy, engine.cellSize + 1, engine.cellSize + 1);
       }
     }
   }
@@ -183,15 +176,16 @@ class MazeRenderer {
    * Отрисовка предмета
    */
   drawItem(pos, color, engine) {
+    const ctx = this.renderCore.ctx;
     const size = engine.cellSize * 0.4;
     const offset = (engine.cellSize - size) / 2;
-    this.ctx.fillStyle = color;
-    this.ctx.shadowBlur = 10;
-    this.ctx.shadowColor = color;
-    this.ctx.fillRect(
+    ctx.fillStyle = color;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = color;
+    ctx.fillRect(
         pos.x * engine.cellSize + offset, pos.y * engine.cellSize + offset,
         size, size);
-    this.ctx.shadowBlur = 0;
+    ctx.shadowBlur = 0;
   }
 
   /**
@@ -217,19 +211,20 @@ class MazeRenderer {
       // drawAnimatedSprite Для простоты пока рисуем как sprite (добавь в
       // SpriteManager метод drawStatic)
 
-      this.ctx.save();
-      this.ctx.shadowBlur = 20;
-      this.ctx.shadowColor = config.color;
+      const ctx = this.renderCore.ctx;
+      ctx.save();
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = config.color;
 
       // Пример: если у тебя есть spriteManager
       if (window.spriteManager) {
         window.spriteManager.drawAnimatedItem(
-            this.ctx, px, py, engine.cellSize * 0.75, config);
+            ctx, px, py, engine.cellSize * 0.75, config);
       } else {
         this.drawItem(item.pos, config.color, engine);
       }
 
-      this.ctx.restore();
+      ctx.restore();
     });
   }
 
@@ -243,18 +238,19 @@ class MazeRenderer {
       const size = engine.cellSize / 3;
 
       // Тело NPC
-      this.ctx.fillStyle = '#f97316';
-      this.ctx.shadowBlur = 8;
-      this.ctx.shadowColor = '#f97316';
-      this.ctx.beginPath();
-      this.ctx.arc(px, py, size, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.shadowBlur = 0;
+      const ctx = this.renderCore.ctx;
+      ctx.fillStyle = '#f97316';
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#f97316';
+      ctx.beginPath();
+      ctx.arc(px, py, size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
 
       // Глаза
-      this.ctx.fillStyle = '#fff';
-      this.ctx.fillRect(px - size / 2 - 2, py - size / 3, 4, 4);
-      this.ctx.fillRect(px + size / 2 - 2, py - size / 3, 4, 4);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(px - size / 2 - 2, py - size / 3, 4, 4);
+      ctx.fillRect(px + size / 2 - 2, py - size / 3, 4, 4);
     });
   }
 
@@ -266,16 +262,17 @@ class MazeRenderer {
     if (window.spriteManager) {
       const dir = window.inputManager.getMovementDirection();
       window.spriteManager.updateState(dir.dx, dir.dy);
-      window.spriteManager.draw(this.ctx, px, py, engine.cellSize * 1.12);
+      window.spriteManager.draw(this.renderCore.ctx, px, py, engine.cellSize * 1.12);
     } else {
       // экстренный fallback
-      this.ctx.fillStyle = '#00d2ff';
-      this.ctx.shadowBlur = 15;
-      this.ctx.shadowColor = '#00d2ff';
-      this.ctx.beginPath();
-      this.ctx.arc(px, py, engine.cellSize / 3, 0, Math.PI * 2);
-      this.ctx.fill();
-      this.ctx.shadowBlur = 0;
+      const ctx = this.renderCore.ctx;
+      ctx.fillStyle = '#00d2ff';
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = '#00d2ff';
+      ctx.beginPath();
+      ctx.arc(px, py, engine.cellSize / 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
     }
   }
 
@@ -286,13 +283,14 @@ class MazeRenderer {
 
       if (window.spriteManager) {
         window.spriteManager.draw(
-            this.ctx, px, py, engine.cellSize, enemy.type);
+            this.renderCore.ctx, px, py, engine.cellSize, enemy.type);
       } else {
         // Фолбэк отрисовка [9]
-        this.ctx.fillStyle = '#ef4444';
-        this.ctx.beginPath();
-        this.ctx.arc(px, py, engine.cellSize / 3, 0, Math.PI * 2);
-        this.ctx.fill();
+        const ctx = this.renderCore.ctx;
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(px, py, engine.cellSize / 3, 0, Math.PI * 2);
+        ctx.fill();
       }
     });
   }
@@ -300,31 +298,27 @@ class MazeRenderer {
    * Отрисовка стены вокруг границ лабиринта (уровни > 15)
    */
   drawBoundaryWall(engine) {
+    const ctx = this.renderCore.ctx;
     const cellSize = engine.cellSize;
     const cols = engine.cols;
     const rows = engine.rows;
     const wallThickness = cellSize * 0.5;
 
-    // Используем текстуру стены
-    this.ctx.fillStyle = this.wallPattern;
+    ctx.fillStyle = this.wallPattern;
 
-    // Верхняя стена
-    this.ctx.fillRect(
+    ctx.fillRect(
         -wallThickness, -wallThickness, cols * cellSize + wallThickness * 2,
         wallThickness);
 
-    // Нижняя стена
-    this.ctx.fillRect(
+    ctx.fillRect(
         -wallThickness, rows * cellSize, cols * cellSize + wallThickness * 2,
         wallThickness);
 
-    // Левая стена
-    this.ctx.fillRect(
+    ctx.fillRect(
         -wallThickness, -wallThickness, wallThickness,
         rows * cellSize + wallThickness * 2);
 
-    // Правая стена
-    this.ctx.fillRect(
+    ctx.fillRect(
         cols * cellSize, -wallThickness, wallThickness,
         rows * cellSize + wallThickness * 2);
   }
@@ -393,7 +387,7 @@ class MazeRenderer {
     });
 
     tCtx.restore();
-    this.ctx.drawImage(tempCanvas, 0, 0);
+    this.renderCore.ctx.drawImage(tempCanvas, 0, 0);
   }
 
   /**
@@ -401,42 +395,43 @@ class MazeRenderer {
    */
   applyFogNormal(px, py, engine, radius) {
     const dpr = window.devicePixelRatio || 1;
+    const ctx = this.renderCore.ctx;
 
-    this.ctx.save();
-    this.ctx.translate(0, this.hudHeight);
+    ctx.save();
+    ctx.translate(0, this.renderCore.hudHeight);
     if (engine.level > 15) {
-      this.ctx.translate(
-          (this.canvas.width / dpr / 2) - px,
-          (this.canvas.height / dpr / 2) - py);
+      ctx.translate(
+          (this.renderCore.canvas.width / dpr / 2) - px,
+          (this.renderCore.canvas.height / dpr / 2) - py);
       radius = radius * engine.cameraZoom;  // увеличиваем радиус при зуме
     }
 
-    const gradCenterX = engine.level > 15 ? (this.canvas.width / dpr / 2) : px;
-    const gradCenterY = engine.level > 15 ? (this.canvas.height / dpr / 2) : py;
-    const gradient = this.ctx.createRadialGradient(
-        gradCenterX, gradCenterY + this.hudHeight, engine.cellSize / 2,
-        gradCenterX, gradCenterY + this.hudHeight, radius);
+    const gradCenterX = engine.level > 15 ? (this.renderCore.canvas.width / dpr / 2) : px;
+    const gradCenterY = engine.level > 15 ? (this.renderCore.canvas.height / dpr / 2) : py;
+    const gradient = ctx.createRadialGradient(
+        gradCenterX, gradCenterY + this.renderCore.hudHeight, engine.cellSize / 2,
+        gradCenterX, gradCenterY + this.renderCore.hudHeight, radius);
     gradient.addColorStop(0, 'rgba(0,0,0,0)');
     gradient.addColorStop(1, 'rgba(2, 6, 23, 1)');
 
 
-    this.ctx.beginPath();
-    this.ctx.rect(
-        -this.canvas.width / dpr, -this.canvas.height / dpr,
-        (this.canvas.width / dpr) * 3, (this.canvas.height / dpr) * 3);
-    this.ctx.arc(px, py, radius, 0, Math.PI * 2, true);
-    this.ctx.clip();
+    ctx.beginPath();
+    ctx.rect(
+        -this.renderCore.canvas.width / dpr, -this.renderCore.canvas.height / dpr,
+        (this.renderCore.canvas.width / dpr) * 3, (this.renderCore.canvas.height / dpr) * 3);
+    ctx.arc(px, py, radius, 0, Math.PI * 2, true);
+    ctx.clip();
 
-    this.ctx.fillStyle = '#020617';
-    this.ctx.fillRect(
-        -this.canvas.width / dpr, -this.canvas.height / dpr,
-        (this.canvas.width / dpr) * 3, (this.canvas.height / dpr) * 3);
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(
+        -this.renderCore.canvas.width / dpr, -this.renderCore.canvas.height / dpr,
+        (this.renderCore.canvas.width / dpr) * 3, (this.renderCore.canvas.height / dpr) * 3);
 
-    // this.ctx.save();
-    this.ctx.restore();
-    this.ctx.fillStyle = gradient;
-    this.ctx.fillRect(
-        0, this.hudHeight, this.canvas.width / dpr, (this.canvas.height) / dpr);
+    // ctx.save();
+    ctx.restore();
+    ctx.fillStyle = gradient;
+    ctx.fillRect(
+        0, this.renderCore.hudHeight, this.renderCore.canvas.width / dpr, (this.renderCore.canvas.height) / dpr);
   }
 
   /**
@@ -459,15 +454,16 @@ class MazeRenderer {
    * Обновление и отрисовка частиц (с учетом смещения камеры)
    */
   updateParticles(engine, px, py) {
+    const ctx = this.renderCore.ctx;
     this.particleSystem = this.particleSystem.filter(p => {
       p.x += p.vx;
       p.y += p.vy;
       p.life--;
 
-      this.ctx.globalAlpha = p.life / 20;
-      this.ctx.fillStyle = p.color;
-      this.ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
-      this.ctx.globalAlpha = 1;
+      ctx.globalAlpha = p.life / 20;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+      ctx.globalAlpha = 1;
 
       return p.life > 0;
     });
@@ -545,20 +541,21 @@ class MazeRenderer {
     const blinkIntensity = (Math.sin(blinkPhase) + 1) / 2;  // От 0 до 1
 
     // Рисуем светлячок с миганием
-    this.ctx.save();
-    this.ctx.globalAlpha =
+    const ctx = this.renderCore.ctx;
+    ctx.save();
+    ctx.globalAlpha =
         0.5 + 0.5 * blinkIntensity;  // Изменяем прозрачность для мигания
-    this.ctx.fillStyle = beaconColor;
-    this.ctx.shadowBlur =
+    ctx.fillStyle = beaconColor;
+    ctx.shadowBlur =
         20 * (0.5 + 0.5 * blinkIntensity);  // Тень также мигает
-    this.ctx.shadowColor = beaconColor;
+    ctx.shadowColor = beaconColor;
 
     // Рисуем маячок как небольшой кружок
-    this.ctx.beginPath();
-    this.ctx.arc(beaconX, beaconY, 6, 0, Math.PI * 2);
-    this.ctx.fill();
+    ctx.beginPath();
+    ctx.arc(beaconX, beaconY, 6, 0, Math.PI * 2);
+    ctx.fill();
 
-    this.ctx.restore();
+    ctx.restore();
   }
 
   /**

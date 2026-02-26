@@ -9,16 +9,16 @@ function showMainMenu() {
 function renderMenuButtons() {
   const container = document.getElementById('menu-buttons');
   container.innerHTML = `
-    <button onclick="startNewGame()">${i18n('menu.newGame')}</button>
-    <button onclick="loadSavedGame()">${i18n('menu.continue')}</button>
-    <button onclick="selectLevel()">${i18n('menu.levelSelect')}</button>
-    <button onclick="openCharacterSelectFromMenu()">${
+    <button class="menu-button" onclick="startNewGame()">${i18n('menu.newGame')}</button>
+    <button class="menu-button" onclick="loadSavedGame()">${i18n('menu.continue')}</button>
+    <button class="menu-button" onclick="selectLevel()">${i18n('menu.levelSelect')}</button>
+    <button class="menu-button" onclick="openCharacterSelectFromMenu()">${
       i18n('menu.character')}</button>
-    <button onclick="showStatsWindow()">${i18n('menu.stats')}</button>
-    <button onclick="showQuestWindow()">${i18n('menu.quests')}</button>
-    <button onclick="openSettings()">${i18n('menu.settings')}</button>
-    <button onclick="exportSave()">${i18n('menu.exportSave')}</button>
-    <button onclick="importSavePrompt()">${i18n('menu.importSave')}</button>
+    <button class="menu-button" onclick="showStatsWindow()">${i18n('menu.stats')}</button>
+    <button class="menu-button" onclick="showQuestWindow()">${i18n('menu.quests')}</button>
+    <button class="menu-button" onclick="openSettings()">${i18n('menu.settings')}</button>
+    <button class="menu-button" onclick="exportSave()">${i18n('menu.exportSave')}</button>
+    <button class="menu-button" onclick="importSavePrompt()">${i18n('menu.importSave')}</button>
   `;
 }
 
