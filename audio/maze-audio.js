@@ -4,25 +4,39 @@
  */
 
 class AudioManager {
-    constructor() {
+   constructor() {
         this.audioContext = null;
         this.enabled = true;
+        this.lastResume = 0;
     }
 
-    /**
-     * Инициализация аудиоконтекста
-     */
     initialize() {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('🔊 AudioContext создан');
         } catch (e) {
             this.enabled = false;
+            console.warn('⚠️ Audio недоступен');
         }
     }
 
     /**
-     * Воспроизведение звука
+     * Обновление аудио (вызывается каждый кадр)
+     * — возобновляет контекст после бездействия (важно для мобильных!)
      */
+    update() {
+        if (!this.enabled || !this.audioContext) return;
+
+        const now = Date.now();
+        // Авто-resume, если контекст suspended (самая частая причина "звука нет")
+        if (this.audioContext.state === 'suspended' && now - this.lastResume > 1000) {
+            this.audioContext.resume().then(() => {
+                this.lastResume = now;
+                console.log('🔊 AudioContext resumed');
+            });
+        }
+    }
+
     play(type) {
         if (!this.enabled || !this.audioContext) return;
         
@@ -33,21 +47,11 @@ class AudioManager {
             gain.connect(this.audioContext.destination);
 
             switch (type) {
-                case 'lock':
-                    this.soundLock(osc, gain);
-                    break;
-                case 'step':
-                    this.soundStep(osc, gain);
-                    break;
-                case 'win':
-                    this.soundWin(osc, gain);
-                    break;
-                case 'get':
-                    this.soundGet(osc, gain);
-                    break;
-                case 'interact':
-                    this.soundInteract(osc, gain);
-                    break;
+                case 'lock':     this.soundLock(osc, gain); break;
+                case 'step':     this.soundStep(osc, gain); break;
+                case 'win':      this.soundWin(osc, gain); break;
+                case 'get':      this.soundGet(osc, gain); break;
+                case 'interact': this.soundInteract(osc, gain); break;
             }
         } catch (e) {
             console.warn('Audio error:', e);

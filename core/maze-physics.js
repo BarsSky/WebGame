@@ -17,6 +17,37 @@ class PhysicsEngine {
   }
 
   /**
+   * Обновить движение игрока (с защитой от отсутствия timestamp)
+   */
+  update(engine, player, input, timestamp = performance.now()) {
+    const moveDelay = Math.max(60, 130 - (engine?.level || 1) * 5);
+    const dir = input?.getMovementDirection?.() || {dx: 0, dy: 0};
+
+    if (dir.dx !== 0 || dir.dy !== 0) {
+      if (timestamp - (this.lastMoveTime || 0) > moveDelay) {
+        let nx = player.x + dir.dx;
+        let ny = player.y + dir.dy;
+
+        if (this.isValidMove(nx, ny, engine)) {
+          // Запрет выхода без ключа
+          if (nx === engine.cols - 1 && ny === engine.rows - 1 &&
+              !engine.hasKey) {
+            return {moved: false, blocked: true};
+          }
+
+          player.x = nx;
+          player.y = ny;
+          this.lastMoveTime = timestamp;
+
+          this.recordVisitedPath(player, engine);
+          return {moved: true, blocked: false};
+        }
+      }
+    }
+    return {moved: false, blocked: false};
+  }
+
+  /**
    * Обновить движение игрока
    */
   updateMovement(player, engine, input, timestamp) {
@@ -70,19 +101,23 @@ class PhysicsEngine {
       engine.visitedPath.push({x: player.x, y: player.y});
     }
 
-    // Если книга получена ИЛИ запись пути уже началась, записываем также соседние клетки в радиусе
+    // Если книга получена ИЛИ запись пути уже началась, записываем также
+    // соседние клетки в радиусе
     if (engine.hasBook || engine.pathRecordingStarted) {
-      const visionRadius = Math.max(1, Math.floor(engine.level / 5)); // Радиус зависит от уровня
+      const visionRadius = Math.max(
+          1, Math.floor(engine.level / 5));  // Радиус зависит от уровня
       for (let dy = -visionRadius; dy <= visionRadius; dy++) {
         for (let dx = -visionRadius; dx <= visionRadius; dx++) {
           const nx = player.x + dx;
           const ny = player.y + dy;
-          
+
           // Проверяем, находится ли клетка в пределах лабиринта
           if (nx >= 0 && nx < engine.cols && ny >= 0 && ny < engine.rows) {
             const distanceSquared = dx * dx + dy * dy;
-            if (distanceSquared <= visionRadius * visionRadius) { // Круговой радиус
-              const existingIndex = engine.visitedPath.findIndex(p => p.x === nx && p.y === ny);
+            if (distanceSquared <=
+                visionRadius * visionRadius) {  // Круговой радиус
+              const existingIndex =
+                  engine.visitedPath.findIndex(p => p.x === nx && p.y === ny);
               if (existingIndex === -1) {
                 engine.visitedPath.push({x: nx, y: ny});
               }

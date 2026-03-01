@@ -12,12 +12,23 @@ class MapEngine {
     this.activeRooms = [];
   }
 
-  generateMap(level) {
+   /**
+   * Генерация лабиринта с автоматической перегенерацией при отсутствии пути
+   * @param {number} level - номер уровня
+   * @param {number} attempt - текущая попытка (для рекурсии)
+   * @returns {Object} данные карты
+   */
+  generateMap(level, attempt = 1) {
+    const MAX_ATTEMPTS = 30;
+
+    console.log(`🎲 Генерация уровня ${level} — попытка ${attempt}/${MAX_ATTEMPTS}`);
+
     const base = 7;
     const inc = (level - 1) * 2;
     this.cols = Math.min(101, base + inc);
     this.rows = Math.min(101, base + inc);
 
+    // Основная генерация
     this.grid = Array(this.rows).fill().map(() => Array(this.cols).fill(1));
     this._generate(0, 0);
 
@@ -32,6 +43,22 @@ class MapEngine {
     this._ensureExitArea();
     this._assignWallTypes(level);
 
+    // === ПРОВЕРКА ПУТИ ===
+    if (!this.hasValidPathToExit()) {
+      console.warn(`⚠️ Уровень ${level} непроходим (попытка ${attempt})`);
+
+      if (attempt < MAX_ATTEMPTS) {
+        // Перегенерируем рекурсивно
+        return this.generateMap(level, attempt + 1);
+      } else {
+        console.error(`❌ Не удалось сгенерировать проходимый уровень ${level} за ${MAX_ATTEMPTS} попыток`);
+        // Принудительно пробиваем путь к выходу (аварийный вариант)
+        this._forcePathToExit();
+      }
+    } else {
+      console.log(`✅ Уровень ${level} проходим (попытка ${attempt})`);
+    }
+
     return {
       grid: this.grid,
       cols: this.cols,
@@ -41,6 +68,24 @@ class MapEngine {
     };
   }
 
+  /**
+   * Аварийный пробив прямого пути к выходу (если не получилось за 30 попыток)
+   */
+  _forcePathToExit() {
+    console.log('🛠️ Принудительно пробиваем путь к выходу...');
+    let x = 0, y = 0;
+    while (x < this.cols - 1 || y < this.rows - 1) {
+      if (x < this.cols - 1) {
+        this.grid[y][x] = 0;
+        x++;
+      } else if (y < this.rows - 1) {
+        this.grid[y][x] = 0;
+        y++;
+      }
+    }
+    this.grid[this.rows-1][this.cols-1] = 0;
+  }
+  
   _generate(x, y) {
     this.grid[y][x] = 0;
     const dirs = [[0, 2], [0, -2], [2, 0], [-2, 0]].sort(() => Math.random() - 0.5);
@@ -166,5 +211,42 @@ class MapEngine {
     }
 
     return found ? { x: kx, y: ky } : { x: this.cols - 2, y: this.rows - 2 };
+  }
+
+    /**
+   * Проверка, есть ли путь от старта (0,0) до выхода
+   * @returns {boolean}
+   */
+  hasValidPathToExit() {
+    if (!this.grid || this.grid.length === 0) return false;
+
+    const start = { x: 0, y: 0 };
+    const goal = { x: this.cols - 1, y: this.rows - 1 };
+
+    // BFS
+    const queue = [start];
+    const visited = new Set();
+    visited.add(`${start.x},${start.y}`);
+
+    const directions = [[0,1], [1,0], [0,-1], [-1,0]];
+
+    while (queue.length > 0) {
+      const {x, y} = queue.shift();
+
+      if (x === goal.x && y === goal.y) return true;
+
+      for (let [dx, dy] of directions) {
+        const nx = x + dx;
+        const ny = y + dy;
+        const key = `${nx},${ny}`;
+
+        if (nx >= 0 && nx < this.cols && ny >= 0 && ny < this.rows &&
+            this.grid[ny][nx] === 0 && !visited.has(key)) {
+          visited.add(key);
+          queue.push({x: nx, y: ny});
+        }
+      }
+    }
+    return false;
   }
 }

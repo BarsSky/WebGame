@@ -105,6 +105,9 @@ class StoryManager {
     this.unlockedStories = new Set();
     this.loadProgress();
   }
+  
+  initialize() {
+  }
 
   /**
    * Загрузить прогресс историй
@@ -267,5 +270,32 @@ class StoryManager {
     this.showDialogBox(npcData.name, text);
     this.unlockedStories.add(`npc_${npcIndex}`);
     this.saveProgress();
+  }
+
+  /**
+   * Проверка столкновений с NPC и запуск диалога
+   * @param {Object} player - игрок
+   * @param {MazeEngine} engine - движок лабиринта
+   */
+  checkNPCCollisions(player, engine) {
+    if (!engine?.npcPos?.length || !engine?.dialogState || !engine?.npcTypes) {
+      return;
+    }
+
+    const px = Math.floor(player.x);
+    const py = Math.floor(player.y);
+
+    engine.npcPos.forEach((npcPos, idx) => {
+      if (npcPos.x === px && npcPos.y === py) {
+        const dialogKey = `npc_${idx}`;
+        if (!engine.dialogState[dialogKey]) {
+          this.interactWithNPC(idx);           // уже существует
+          engine.dialogState[dialogKey] = true;
+
+          // звук взаимодействия (если audioManager жив)
+          window.audioManager?.play?.('interact');
+        }
+      }
+    });
   }
 }
