@@ -8,35 +8,25 @@ const MAZE_REGISTRY = {
     'cat': {
       id: 'cat',
       name: 'Шу',
-      stats: {speed: 1.0},
-      spriteSheets: {
-        preview: 'sprites/cat_preview.png',  // Для выбора персонажа
-        idle: 'sprites/cat_sit.png',
-        walk: 'sprites/cat_run_left.png'
-      },
+      preview: 'sprites/cat_preview.png',
+      spriteSheets:
+          {idle: 'sprites/cat_sit.png', walk: 'sprites/cat_run_left.png'},
       animationConfig: {
         frameWidth: 256,
         frameHeight: 256,
         states: {
-          idle: {sheet: 'idle', cols: 5, frames: 5, speed: 0, baseRow: 0},
-          walk: {
-            sheet: 'walk',
-            cols: 5,
-            frames: 5,
-            speed: 5,
-            baseRow: 0,
-            mirrorForRight: true
-          }
+          idle: {cols: 5, frames: 25, speed: 0},
+          walk: {cols: 8, frames: 25, speed: 5, mirrorForRight: true}
         }
-      }
+      },
+      stats: {speed: 1.0}
     },
     'dog': {
       id: 'dog',
       name: 'Сиба',
-      stats: {speed: 0.8},
+      preview: 'sprites/dog_preview.png',
       spriteSheets: {
-        preview: 'sprites/dog_preview.png',  // Для выбора персонажа
-        idle: 'sprites/dog_sit.png',         // или dog_steady.png
+        idle: 'sprites/dog_sit.png',
         walk: 'sprites/dog_walk.png',
         accelerate: 'sprites/dog_acceselerate.png'
       },
@@ -44,19 +34,18 @@ const MAZE_REGISTRY = {
         frameWidth: 256,
         frameHeight: 256,
         states: {
-          idle: {sheet: 'idle', cols: 5, frames: 5, speed: 1, baseRow: 0},
-          walk: {sheet: 'walk', cols: 5, frames: 5, speed: 1, baseRow: 0},
-          accelerate:
-              {sheet: 'accelerate', cols: 5, frames: 2, speed: 1, baseRow: 0}
+          idle: {cols: 5, frames: 25, speed: 0},
+          walk: {cols: 8, frames: 25, speed: 7},
+          accelerate: {cols: 8, frames: 8, speed: 4}
         }
-      }
+      },
+      stats: {speed: 0.8}
     },
     'bird': {
       id: 'bird',
       name: 'Стриж',
-      stats: {speed: 1.2},
+      preview: 'sprites/bird_preview.png',
       spriteSheets: {
-        preview: 'sprites/bird_preview.png',  // Для выбора персонажа
         idle: 'sprites/bird_preview.png',
         walk: 'sprites/bird_fly.png',
         accelerate: 'sprites/bird_accesl.png'
@@ -65,12 +54,12 @@ const MAZE_REGISTRY = {
         frameWidth: 256,
         frameHeight: 256,
         states: {
-          idle: {sheet: 'idle', cols: 5, frames: 4, speed: 2, baseRow: 0},
-          walk: {sheet: 'walk', cols: 5, frames: 5, speed: 2, baseRow: 0},
-          accelerate:
-              {sheet: 'accelerate', cols: 5, frames: 5, speed: 3, baseRow: 0}
+          idle: {cols: 5, frames: 25, speed: 10},
+          walk: {cols: 5, frames: 25, speed: 6},
+          accelerate: {cols: 5, frames: 5, speed: 3}
         }
-      }
+      },
+      stats: {speed: 1.2}
     }
   },
 
@@ -134,17 +123,50 @@ const MAZE_REGISTRY = {
       color: 'rgba(168, 85, 247, 0.1)'
     }
   },
+  wallTypes: {
+    1: {
+      // Кирпич (уровни 1-15)
+      name: 'brick',
+      pattern: 'brick',
+      isoOffset: {x: 0, y: 0}
+    },
+    2: {
+      // Камень (уровни 16-25)
+      name: 'stone',
+      pattern: 'stone',
+      color: '#475569',
+      isoOffset: {x: 6, y: -8}
+    },
+    3: {
+      // Руины (уровни 26+)
+      name: 'ruins',
+      pattern: null,
+      color: '#334155',
+      isoOffset: {x: 12, y: -14},
+      sprite: 'sprites/wall_ruins.png',
+      animationFrames: 3
+    }
+  },
+
   items: {
-    'key':
-        {name: 'Ключ', color: '#10b981', action: 'collect_key', sound: 'get'},
-    'book': {
-      name: 'Книга Знаний',
-      color: '#60a5fa',
-      action: 'collect_book',
+    'key': {
+      name: 'Ключ',
+      sprite: 'sprites/item_key.png',  // анимированный спрайт
+      frames: 25,
+      animSpeed: 1,
+      color: '#fbbf24',  // fallback
+      action: 'collect_key',
       sound: 'get'
     },
-    'coin':
-        {name: 'Монета', color: '#fde047', action: 'add_score', sound: 'get'}
+    'book': {
+      name: 'Книга Знаний',
+      sprite: 'sprites/item_book.png',
+      frames: 25,
+      animSpeed: 1,
+      color: '#a855f7',
+      action: 'collect_book',
+      sound: 'get'
+    }
   }
 };
 

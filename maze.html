@@ -3,87 +3,82 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Лабиринт — SKYNAS</title>
+    <title>Maze Maze Daze</title>
     <link rel="stylesheet" href="maze.css">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Segoe+UI+Emoji&display=swap"
-        rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><text y=%27.9em%27 font-size=%2790%27>🌀</text></svg>">
 </head>
 
 <body tabindex="0">
-    <div class="app-container">
-        <div class="header-info">
-            <span>LVL: <span id="level-val" class="lvl-text">1</span></span>
-            <span id="key-status" style="color: #fbbf24; opacity: 0.3;">🔑 КЛЮЧ</span>
-            <span id="book-status" style="color: #a855f7; opacity: 0.2; display: none;">📖</span>
-            <span>VIEW: <span id="vision-val" class="lvl-text">MAX</span></span>
-            <span onclick="selectLevel()" style="cursor:pointer; color:#3b82f6; font-size:0.7rem; margin-left:10px;">[СМЕНА УРОВНЯ]</span>
-            <span onclick="resetGame()"
-                style="cursor:pointer; color:#ef4444; font-size:0.7rem; margin-left:10px;">[СБРОС]</span>
-            <span class="toggle-btn" onclick="togglePanel('help')">?</span>
-            <span class="toggle-btn" onclick="togglePanel('table')">📊</span>
-        </div>
-        <div class="main-content">
-            <div id="help-panel" class="side-panel help-panel desktop-visible">
-                <h3>Справка</h3>
-                <p>Используйте стрелки клавиатуры или кнопки на экране для перемещения.</p>
-                <p>Соберите ключ, чтобы открыть выход. На уровнях >=10 соберите книгу для видимости пути.</p>
-                <p>Туман войны сужается с уровнем. После 15 уровня - камера следует за игроком.</p>
-                <button class="hide-btn desktop-only" onclick="hidePanel('help')">Скрыть</button>
+
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <div id="main-menu" class="main-menu">
+        <div class="menu-content">
+            <h1 class="game-title">MAZE MAZE DAZE</h1>
+            <p class="subtitle">MMD</p>
+            <div class="menu-buttons" id="menu-buttons"></div>
+            <div class="menu-footer">
+                <button onclick="changeLanguage()">🌐 RU/EN</button>
+                <span id="version">v1.3</span>
             </div>
+        </div>
+    </div>
+    <!-- maze.html -->
+    <div class="header-controls">
+        <button onclick="backToMenu()" class="menu-btn">🏠 МЕНЮ</button>
+        <button onclick="toggleDebugPanel()" class="debug-btn">⚙️ ОТЛАДКА</button>
+    </div>
+
+    <!-- Панель отладки -->
+<div id="debug-panel" class="side-panel" style="display: none;">
+    <h3>🛠️ ИНСТРУМЕНТЫ ОТЛАДКИ</h3>
+    
+    <button onclick="toggleFogDebug()">🌫️ Туман войны: <span id="fog-status">ВКЛ</span></button>
+    <button onclick="checkPathToExit()">🔍 Проверить путь до выхода</button>
+    <button onclick="engine.level++; setupGame()">⏭️ Следующий уровень</button>
+    <button onclick="engine.resetProgress(); setupGame()">🔄 Сброс прогресса</button>
+    
+    <hr>
+    <button onclick="toggleDebugPanel()">❌ ЗАКРЫТЬ</button>
+</div>
+    <!-- ИГРА -->
+    <div id="game-container" class="app-container" style="display:none">
+        <div class="main-content">
             <div class="center-content">
                 <div id="win" class="win-msg">WAY OUT FOUND!</div>
                 <div class="canvas-wrapper">
                     <canvas id="maze"></canvas>
                 </div>
-                <div class="controls-container">
-                    <div class="btn up" id="btn-ArrowUp">▲</div>
-                    <div class="btn left" id="btn-ArrowLeft">◀</div>
-                    <div class="btn down" id="btn-ArrowDown">▼</div>
-                    <div class="btn right" id="btn-ArrowRight">▶</div>
-                </div>
-            </div>
-            <div id="table-panel" class="side-panel table-panel desktop-visible">
-                <h3>Таблица</h3>
-                <table>
-                    <tr>
-                        <th>Уровень</th>
-                        <th>Описание</th>
-                    </tr>
-                    <tr>
-                        <td>1-4</td>
-                        <td>Широкий обзор</td>
-                    </tr>
-                    <tr>
-                        <td>5-9</td>
-                        <td>Средний обзор</td>
-                    </tr>
-                    <tr>
-                        <td>10+</td>
-                        <td>Узкий обзор, книга доступна</td>
-                    </tr>
-                    <tr>
-                        <td>15+</td>
-                        <td>Камера следует за игроком</td>
-                    </tr>
-                </table>
-                <button class="hide-btn desktop-only" onclick="hidePanel('table')">Скрыть</button>
             </div>
         </div>
     </div>
-    <!-- Скрипты модулей -->
-    <script src="maze-registry.js"></script>
-    <script src="maze-sprite.js"></script>
-    <script src="maze-engine.js"></script>
-    <script src="maze-renderer.js"></script>
-    <script src="maze-input.js"></script>
-    <script src="maze-audio.js"></script>
-    <script src="maze-physics.js"></script>
-    <script src="maze-story.js"></script>
+    
+    <!-- СКРИПТЫ -->
+    <script src="utils/constants.js"></script>
+    <script src="utils/error-handler.js"></script>
+    <script src="utils/performance.js"></script>
+    <script src="utils/interfaces.js"></script>
+    <script src="entities/maze-registry.js"></script>
+    <script src="utils/maze-i18n.js"></script>
+    <script src="ui/maze-save.js"></script>
+    <script src="ui/maze-menu.js"></script>
+    <script src="entities/maze-sprite.js"></script>
+    
+    <!-- Новые модули архитектуры -->
+    <script src="core/map-engine.js"></script>
+    <script src="entities/entity-manager.js"></script>
+    <script src="core/fog-manager.js"></script>
+    <script src="ui/player-renderer.js"></script>
+    
+    <script src="core/maze-engine.js"></script>
+    <script src="ui/render-system.js"></script>
+    <script src="ui/maze-renderer.js"></script>
+    <script src="ui/maze-input.js"></script>
+    <script src="audio/maze-audio.js"></script>
+    <script src="core/maze-physics.js"></script>
+    <script src="ui/maze-story.js"></script>
+    <script src="core/Game.js"></script>
     <script src="maze-main.js"></script>
-    <script src="DEBUG.js"></script>
 </body>
 
 </html>

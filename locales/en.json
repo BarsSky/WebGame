@@ -1,0 +1,14 @@
+{
+  "menu": {
+    "newGame": "New Game",
+    "continue": "Continue",
+    "levelSelect": "Level Select",
+    "character": "Character",
+    "stats": "Stats",
+    "quests": "Quests",
+    "settings": "Settings",
+    "exportSave": "Export Save",
+    "importSave": "Import Save",
+    "noSave": "No Save Found"
+  }
+}
