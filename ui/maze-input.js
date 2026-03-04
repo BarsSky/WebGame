@@ -14,6 +14,7 @@ class InputManager {
   initialize() {
     console.log('📍 InputManager.initialize() called. Mobile:', this.isMobile, 'ID:', this.keysId);
 
+    this.keys = {}; // Сброс всех залипших клавиш при инициализации
     this.clearOldListeners();
 
     this.bindKeyboard();
@@ -115,10 +116,24 @@ class InputManager {
   }
 
   getMovementDirection() {
-    if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) return { dx: 0, dy: -1 };
-    if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) return { dx: 0, dy: 1 };
-    if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) return { dx: -1, dy: 0 };
-    if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) return { dx: 1, dy: 0 };
-    return { dx: 0, dy: 0 };
+    const dir = { dx: 0, dy: 0 };
+    
+    if (this.keys['ArrowUp'] || this.keys['w'] || this.keys['W']) dir.dy = -1;
+    else if (this.keys['ArrowDown'] || this.keys['s'] || this.keys['S']) dir.dy = 1;
+    
+    if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A']) dir.dx = -1;
+    else if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D']) dir.dx = 1;
+    
+    // Если нажаты и вертикаль, и горизонталь, приоритет отдаем последнему нажатию или
+    // блокируем диагональ (так как движок плиточный), но не даем вертикали полностью подавлять горизонталь
+    if (dir.dx !== 0 && dir.dy !== 0) {
+        // В плиточном лабиринте лучше оставить только одну ось.
+        // Чтобы не было приоритета вертикали, можно проверять, какая клавиша была нажата последней,
+        // но для простоты мы просто разрешим горизонтали работать, если вертикаль не нажата.
+        // В данном случае, если обе нажаты, выберем горизонталь для баланса.
+        dir.dy = 0;
+    }
+    
+    return dir;
   }
 }

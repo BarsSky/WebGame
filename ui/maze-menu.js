@@ -6,6 +6,7 @@
 class MenuManager {
   constructor() {
     this.currentView = 'main-menu';
+    this.playerName = localStorage.getItem('skynas_player_name') || '';
   }
 
   async showMainMenu() {
@@ -36,6 +37,12 @@ class MenuManager {
     const container = document.getElementById('menu-buttons');
     if (!container) return;
 
+    // Если имя игрока не установлено, показываем форму регистрации
+    if (!this.playerName) {
+      this.renderRegistrationForm(container);
+      return;
+    }
+
     const buttons = [
       { label: 'menu.newGame', action: 'window.menuManager.startNewGame()' },
       { label: 'menu.loadGame', action: 'window.menuManager.openLoadSlots()' },
@@ -46,9 +53,69 @@ class MenuManager {
       { label: 'menu.importSave', action: 'window.menuManager.importSavePrompt()' }
     ];
 
-    container.innerHTML = buttons.map(btn => `
+    container.innerHTML = `
+      <div style="margin-bottom: 15px; color: #fbbf24; font-weight: bold;">
+        ${i18n('menu.welcome') || 'Привет'}, ${this.playerName}!
+        <span style="font-size: 0.7rem; cursor: pointer; text-decoration: underline; margin-left: 10px;" onclick="window.menuManager.logout()">[Выйти]</span>
+      </div>
+    ` + buttons.map(btn => `
       <button class="menu-button" onclick="${btn.action}">${i18n(btn.label)}</button>
     `).join('');
+  }
+
+  renderRegistrationForm(container) {
+    container.innerHTML = `
+      <div class="registration-form" style="display: flex; flex-direction: column; gap: 15px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(0,210,255,0.3);">
+        <h3 style="margin: 0; color: #00d2ff;">${i18n('menu.registration') || 'Регистрация'}</h3>
+        <input type="text" id="player-name-input" placeholder="${i18n('menu.enterName') || 'Введите имя'}"
+               style="padding: 12px; border-radius: 8px; border: 1px solid #444; background: #111; color: white; outline: none;">
+        <button class="menu-button" onclick="window.menuManager.handleRegistration()">${i18n('menu.start') || 'Начать'}</button>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">${i18n('menu.nameHint') || 'Имя должно быть уникальным'}</p>
+      </div>
+    `;
+  }
+
+  async handleRegistration() {
+    const input = document.getElementById('player-name-input');
+    const name = input.value.trim();
+    
+    if (name.length < 3) {
+      alert(i18n('menu.nameTooShort') || 'Имя слишком короткое (минимум 3 символа)');
+      return;
+    }
+
+    // Проверка уникальности через БД (имитация)
+    if (window.dbIntegration) {
+      const isUnique = await this.checkNameUniqueness(name);
+      if (!isUnique) {
+        alert(i18n('menu.nameTaken') || 'Это имя уже занято!');
+        return;
+      }
+    }
+
+    this.playerName = name;
+    localStorage.setItem('skynas_player_name', name);
+    if (window.gameInstance && window.gameInstance.engine) {
+      window.gameInstance.engine.playerName = name;
+    }
+    this.renderMenuButtons();
+    this.showNotification((i18n('menu.welcome') || 'Добро пожаловать') + ', ' + name + '!', 'success');
+  }
+
+  async checkNameUniqueness(name) {
+    // В реальном приложении здесь был бы запрос к API
+    // Для демонстрации имитируем задержку и проверку
+    return new Promise(resolve => {
+      setTimeout(() => resolve(true), 500);
+    });
+  }
+
+  logout() {
+    if (confirm(i18n('menu.confirmLogout') || 'Выйти из профиля?')) {
+      localStorage.removeItem('skynas_player_name');
+      this.playerName = '';
+      this.renderMenuButtons();
+    }
   }
 
   startNewGame() {

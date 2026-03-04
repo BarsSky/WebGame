@@ -135,10 +135,15 @@ class Game {
    * Настройка уровня
    */
  setupGame() {
-    this.engine.initLevel();
-    this.renderer.resizeCanvas(this.engine);
+   this.engine.initLevel();
+   this.renderer.resizeCanvas(this.engine);
 
-    if (this.engine.level === 22 && !localStorage.getItem('charSelectShown_22')) {
+   // Сброс состояния ввода перед началом уровня
+   if (this.inputManager) {
+     this.inputManager.keys = {};
+   }
+
+   if (this.engine.level === 22 && !localStorage.getItem('charSelectShown_22')) {
       setTimeout(() => {
         openCharacterSelect();
         localStorage.setItem('charSelectShown_22', 'true');
