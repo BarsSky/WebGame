@@ -180,18 +180,18 @@ class Game {
   gameLoop(timestamp) {
     // Если игра на паузе, не обновляем логику
     if (this.state.paused) {
-      requestAnimationFrame((ts) => this.gameLoop(ts));
+      this._rafId = requestAnimationFrame((ts) => this.gameLoop(ts));
       return;
     }
 
     // Обновление логики
-    this.update();
+    this.update(timestamp);
 
     // Рендеринг
     this.render();
 
     // Следующий кадр
-    requestAnimationFrame((ts) => this.gameLoop(ts));
+    this._rafId = requestAnimationFrame((ts) => this.gameLoop(ts));
   }
 
   /**
@@ -199,14 +199,14 @@ class Game {
    * @param {number} targetFps - Целевая частота кадров
    */
   startOptimized(targetFps = 60) {
-    performanceOptimizer.optimizedRAF((timestamp) => {
+    this._optimizedLoop = performanceOptimizer.optimizedRAF((timestamp) => {
       // Если игра на паузе, не обновляем логику
       if (this.state.paused) {
         return;
       }
 
       // Обновление логики
-      this.update();
+      this.update(timestamp);
 
       // Рендеринг
       this.render();
@@ -281,6 +281,11 @@ handleLevelComplete() {
     this.state.paused = true;
 
     this.engine.level++;
+    
+    // Автосохранение при переходе на новый уровень
+    if (typeof SaveManager !== 'undefined') {
+      SaveManager.save('autosave');
+    }
     this.engine.saveProgress();
 
     console.log(`🎉 Уровень завершён! Новый уровень: ${this.engine.level}`);
@@ -295,23 +300,31 @@ handleLevelComplete() {
     }, 2000);
   }
 
-  gameLoop(timestamp) {
-    this.update(timestamp);
-    this.render();
-    requestAnimationFrame((ts) => this.gameLoop(ts));
-  }
-
   /**
    * Запуск игрового цикла
    * @param {number} targetFps - Целевая частота кадров (по умолчанию 60)
    */
   start(targetFps = 60) {
+    this.stop(); // Останавливаем предыдущий цикл, если он был
     if (targetFps < 60) {
       // Используем оптимизированный цикл с ограничением FPS
       this.startOptimized(targetFps);
     } else {
       // Используем стандартный цикл
-      requestAnimationFrame((ts) => this.gameLoop(ts));
+      this._rafId = requestAnimationFrame((ts) => this.gameLoop(ts));
+    }
+  }
+
+  /**
+   * Остановка игрового цикла
+   */
+  stop() {
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+    if (this._optimizedLoop && typeof this._optimizedLoop.stop === 'function') {
+      this._optimizedLoop.stop();
     }
   }
 

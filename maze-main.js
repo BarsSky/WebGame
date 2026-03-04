@@ -346,7 +346,7 @@ window.addEventListener('resize', () => {
  * Запуск игры при загрузке страницы
  */
 
-function startGame() {
+async function startGame() {
   console.log('🎮 Запуск Maze Maze Daze...');
 
   // Если Game класс еще не инициализирован, создаем его
@@ -360,7 +360,7 @@ function startGame() {
 
   // ВСЕГДА показываем главное меню при перезагрузке страницы
   // Это самое надёжное решение для разработки
-  showMainMenu();
+  await showMainMenu();
 }
 
 // Проверяем, уже ли DOM загружен
@@ -439,6 +439,10 @@ function createBottomPanels() {
     <div class="panel" id="quest-panel">
       <strong>Задание:</strong><br>
       <span id="current-quest">Найди ключ и выход из лабиринта</span>
+    </div>
+    <div class="panel hud-controls">
+      <button class="hud-button" onclick="window.menuManager.openSaveSlots()">${i18n('hud.save') || 'Сохранить'}</button>
+      <button class="hud-button" onclick="backToMenu()">${i18n('hud.menu') || 'Меню'}</button>
     </div>
   `;
 }

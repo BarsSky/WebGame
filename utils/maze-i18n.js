@@ -21,3 +21,9 @@ function i18n(key) {
 
 window.loadLocale = loadLocale;
 window.i18n = i18n;
+
+// Экспортируем текущую локаль в глобальную область видимости
+Object.defineProperty(window, 'currentLocale', {
+    get: () => currentLocale,
+    set: (val) => { currentLocale = val; }
+});
